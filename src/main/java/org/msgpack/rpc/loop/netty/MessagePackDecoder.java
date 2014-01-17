@@ -48,17 +48,7 @@ public class MessagePackDecoder extends OneToOneDecoder {
             return null;
         }
 
-        byte[] bytes = buffer.array(); // FIXME buffer must has array
-        int offset = buffer.arrayOffset() + buffer.position();
-        int length = buffer.arrayOffset() + buffer.limit();
-
-        Value v = messagePack.read(bytes, offset, length);
-        return v;
-
-        // TODO MessagePack.unpack()
-        /*
-         * Unpacker pac = new Unpacker(); pac.wrap(bytes, offset, length);
-         * return pac.unpackObject();
-         */
+        return messagePack.read(buffer.slice());
     }
 }
+
