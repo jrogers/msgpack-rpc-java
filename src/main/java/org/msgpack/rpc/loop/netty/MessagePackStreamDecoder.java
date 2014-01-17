@@ -40,24 +40,20 @@ public class MessagePackStreamDecoder extends FrameDecoder {
     protected Object decode(ChannelHandlerContext ctx, Channel channel,
             ChannelBuffer source) throws Exception {
         // TODO #MN will modify the body with MessagePackBufferUnpacker.
-        ByteBuffer buffer = source.toByteBuffer();
+        ByteBuffer buffer = source.toByteBuffer().duplicate();
         if (!buffer.hasRemaining()) {
             return null;
         }
         source.markReaderIndex();
 
-        byte[] bytes = buffer.array(); // FIXME buffer must has array
-        int offset = buffer.arrayOffset() + buffer.position();
-        int length = buffer.arrayOffset() + buffer.limit();
-        ByteArrayInputStream stream = new ByteArrayInputStream(bytes, offset,
-                length);
-        int startAvailable = stream.available();
         try{
-            Unpacker unpacker = msgpack.createUnpacker(stream);
+            final int posBeforeUnpack = buffer.position();
+            Unpacker unpacker = msgpack.createBufferUnpacker(buffer);
             Value v = unpacker.readValue();
-            source.skipBytes(startAvailable - stream.available());
+            source.skipBytes(buffer.position() - posBeforeUnpack);
             return v;
-        }catch( EOFException e ){
+        }
+        catch( EOFException e ){
             // not enough buffers.
             // So retry reading
             source.resetReaderIndex();
