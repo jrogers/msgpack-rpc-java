@@ -81,7 +81,7 @@ public class BigDataTest extends TestCase {
             //warmup
             assertEquals(BIG_DATA, c.callApply("test", new Object[]{BIG_DATA}));
 
-			int num = 100;
+			int num = 10000;
 
 			long start = System.currentTimeMillis();
 			for(int i = 0; i < num - 1; i++) {

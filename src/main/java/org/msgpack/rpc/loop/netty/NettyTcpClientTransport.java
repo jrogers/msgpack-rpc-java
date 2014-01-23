@@ -18,6 +18,7 @@
 package org.msgpack.rpc.loop.netty;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
@@ -32,7 +33,8 @@ import org.msgpack.rpc.transport.RpcMessageHandler;
 class NettyTcpClientTransport implements ClientTransport {
 
     private final Session _session;
-    private final Bootstrap bootstrap;
+    private final Bootstrap _bootstrap;
+    private final AtomicInteger _availables = new AtomicInteger(1024);
     private final ConcurrentLinkedQueue<Channel> _writables;
 
     NettyTcpClientTransport(final TcpClientConfig config,
@@ -42,10 +44,10 @@ class NettyTcpClientTransport implements ClientTransport {
         // TODO check session.getAddress() instanceof IPAddress
         final RpcMessageHandler handler = new RpcMessageHandler(session);
 
-        bootstrap = new Bootstrap()
-            .group(new NioEventLoopGroup(2))
+        _bootstrap = new Bootstrap()
+            .group(new NioEventLoopGroup(/*2*/))
             .channel(NioSocketChannel.class)
-            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, Math.round((float)config.getConnectTimeout()))
+            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, Math.round((float) config.getConnectTimeout()))
             .option(ChannelOption.TCP_NODELAY, !Boolean.FALSE.equals(config.getOption(ChannelOption.TCP_NODELAY.name())))
             .option(ChannelOption.SO_KEEPALIVE, !Boolean.FALSE.equals(config.getOption(ChannelOption.SO_KEEPALIVE.name())))
             .handler(new ChannelInitializer<SocketChannel>() {
@@ -64,29 +66,47 @@ class NettyTcpClientTransport implements ClientTransport {
     }
 
     protected ChannelFuture startConnection() {
-        return bootstrap.connect(_session.getAddress().getSocketAddress());
+
+        return _bootstrap.connect(_session.getAddress().getSocketAddress());
     }
 
     public void sendMessage(final Object msg) {
 
-        if(_writables.isEmpty()){
+        if(_writables.isEmpty() && _availables.getAndDecrement() > 0){
 
             startConnection().addListener(new ChannelFutureListener() {
 
                 public void operationComplete(ChannelFuture future) throws Exception {
 
-                    sendMessageChannel(future.channel(), msg);
+                    final Channel connected = future.channel();
+
+                    sendMessageChannel(connected, msg);
+
+                    connected.closeFuture().addListener(new ChannelFutureListener() {
+                        public void operationComplete(ChannelFuture channelFuture) throws Exception {
+                            _availables.incrementAndGet();
+                        }
+                    });
                 }
             });
         }
         else{
-            sendMessageChannel(_writables.poll(), msg);
+
+            final Channel writable = _writables.poll();
+
+            if(writable != null){
+
+                sendMessageChannel(writable, msg);
+            }
+            else{
+
+                Thread.yield();
+                sendMessage(msg);
+            }
         }
     }
 
     public void close(){
-
-        System.out.println("[client transport] closing channels:" + _writables.size());
 
         while(!_writables.isEmpty()){
                _writables.poll().close();

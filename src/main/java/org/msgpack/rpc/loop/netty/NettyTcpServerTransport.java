@@ -45,8 +45,8 @@ class NettyTcpServerTransport implements ServerTransport {
 
         handler.useThread(true);
 
-        final EventLoopGroup bossGroup = new NioEventLoopGroup(1); // (1)
-        final EventLoopGroup workerGroup = new NioEventLoopGroup(4);
+        final EventLoopGroup bossGroup = new NioEventLoopGroup(/*1*/); // (1)
+        final EventLoopGroup workerGroup = new NioEventLoopGroup(/*4*/);
         final ServerBootstrap b = new ServerBootstrap()
                 .group(bossGroup, workerGroup)
                 .channel(NioServerSocketChannel.class) // (3)
