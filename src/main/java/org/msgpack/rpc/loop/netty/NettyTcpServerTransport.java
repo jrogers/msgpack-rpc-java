@@ -17,28 +17,16 @@
 //
 package org.msgpack.rpc.loop.netty;
 
-import java.io.EOFException;
-import java.nio.ByteBuffer;
-import java.util.List;
-
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufOutputStream;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.handler.codec.ByteToMessageDecoder;
-import io.netty.handler.codec.MessageToByteEncoder;
-import org.msgpack.MessagePack;
-import org.msgpack.MessagePackable;
 import org.msgpack.rpc.Server;
 import org.msgpack.rpc.config.TcpServerConfig;
 import org.msgpack.rpc.transport.RpcMessageHandler;
 import org.msgpack.rpc.transport.ServerTransport;
 import org.msgpack.rpc.address.Address;
-import org.msgpack.type.Value;
-import org.msgpack.unpacker.Unpacker;
 
 class NettyTcpServerTransport implements ServerTransport {
 
@@ -77,115 +65,6 @@ class NettyTcpServerTransport implements ServerTransport {
 
         // Bind and start to accept incoming connections.
         channelFuture = b.bind(address.getSocketAddress()).sync(); // (7)
-    }
-
-    static class MessagePackDecoder extends ByteToMessageDecoder {
-
-        private final MessagePack _msgpack;
-
-        public MessagePackDecoder(final MessagePack msgpack){
-            _msgpack = msgpack;
-        }
-
-        @Override
-        protected void decode(final ChannelHandlerContext channelHandlerContext,
-                              final ByteBuf byteBuf,
-                              final List<Object> out) throws Exception {
-
-            //System.out.println("[server transport] got bytebuf to decode");
-
-            final ByteBuffer buffer = byteBuf.markReaderIndex().nioBuffer().slice();
-
-            try{
-                Unpacker unpacker = _msgpack.createBufferUnpacker(buffer);
-
-                out.add(unpacker.readValue());
-
-                //System.out.println("[server transport] feed value to the next");
-
-                byteBuf.skipBytes(buffer.position());
-            }
-            catch( EOFException e ){
-
-                //System.out.println("[server transport] not enough bytebuf");
-
-                byteBuf.resetReaderIndex();
-            }
-        }
-    }
-
-    static class MessagePackEncoder extends MessageToByteEncoder<Value> {
-
-        private final MessagePack _msgpack;
-
-        public MessagePackEncoder(final MessagePack msgpack){
-            _msgpack = msgpack;
-        }
-
-        @Override
-        protected void encode(ChannelHandlerContext ctx, Value msg, ByteBuf out) throws Exception {
-
-            //System.out.println("[server transport] encoding msg of Value");
-
-            _msgpack.createPacker(new ByteBufOutputStream(out)).write(msg);
-
-            ctx.flush();
-        }
-    }
-
-    static class MessagePackableEncoder extends MessageToByteEncoder<MessagePackable> {
-
-        private final MessagePack _msgpack;
-
-        public MessagePackableEncoder(final MessagePack msgpack){
-            _msgpack = msgpack;
-        }
-
-        @Override
-        protected void encode(ChannelHandlerContext ctx, MessagePackable msg, ByteBuf out) throws Exception {
-
-            //System.out.println("[server transport] encoding msg of Value from packable encoder");
-
-            msg.writeTo(_msgpack.createPacker(new ByteBufOutputStream(out)));
-
-            //System.out.println("[server transport] encoding msg of Value from packable encoder [written]");
-        }
-
-        @Override
-        public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-
-            super.write(ctx, msg, promise);
-
-            ctx.flush();
-
-            //System.out.println("[server transport] encoding msg of Value from packable encoder [flushed]");
-        }
-    }
-
-    static class MessageHandler extends ChannelInboundHandlerAdapter {
-
-        private final RpcMessageHandler _rpcHandler;
-
-        public MessageHandler(final RpcMessageHandler rpcHandler){
-            _rpcHandler = rpcHandler;
-        }
-
-        @Override
-        public void channelRead(ChannelHandlerContext ctx, Object msg) {
-
-            //System.out.println("[server transport] got message decoded: " + msg.getClass().getName());
-
-            Value value = (Value) msg;
-
-            _rpcHandler.handleMessage(new ChannelAdaptor(ctx.channel()), value);
-        }
-
-        @Override
-        public void exceptionCaught(final ChannelHandlerContext ctx, Throwable cause) throws Exception {
-
-            cause.printStackTrace();
-            ctx.close();
-        }
     }
 
     public void close() {

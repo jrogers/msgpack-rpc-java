@@ -45,17 +45,19 @@ public class BigDataTest extends TestCase {
 			svr.serve(new BigDataDispatcher());
 			svr.listen(19851);
 
-			int num = 5;
+            //warmup
+            assertEquals(BIG_DATA, c.callApply("test", new Object[]{BIG_DATA}));
+
+			int num = 10;
 
 			long start = System.currentTimeMillis();
 			for(int i=0; i < num; i++) {
-				Value result = c.callApply("test", new Object[]{BIG_DATA});
-				assertEquals(BIG_DATA, result);
+				assertEquals(BIG_DATA, c.callApply("test", new Object[]{BIG_DATA}));
 			}
 			long finish = System.currentTimeMillis();
 
 			double result = num / ((double)(finish - start) / 1000);
-			System.out.println("sync: "+result+" calls per sec");
+			System.out.printf("sync: %f calls per sec, and avg: %fms per call", result, (double) (finish - start) / num);
 
 		}
         finally {
@@ -76,10 +78,13 @@ public class BigDataTest extends TestCase {
 			svr.serve(new BigDataDispatcher());
 			svr.listen(19852);
 
-			int num = 10;
+            //warmup
+            assertEquals(BIG_DATA, c.callApply("test", new Object[]{BIG_DATA}));
+
+			int num = 100;
 
 			long start = System.currentTimeMillis();
-			for(int i=0; i < num-1; i++) {
+			for(int i = 0; i < num - 1; i++) {
 				c.notifyApply("test", new Object[]{BIG_DATA});
 			}
 			c.callApply("test", new Object[]{BIG_DATA});
@@ -88,7 +93,8 @@ public class BigDataTest extends TestCase {
 			double result = num / ((double)(finish - start) / 1000);
 			System.out.println("async: "+result+" calls per sec");
 
-		} finally {
+		}
+        finally {
 			svr.close();
 			c.close();
 			loop.shutdown();
