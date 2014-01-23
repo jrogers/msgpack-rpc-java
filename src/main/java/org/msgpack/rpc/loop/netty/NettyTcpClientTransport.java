@@ -37,14 +37,17 @@ import org.msgpack.MessagePack;
 import org.msgpack.MessagePackable;
 import org.msgpack.rpc.Session;
 import org.msgpack.rpc.config.TcpClientConfig;
+import org.msgpack.rpc.transport.ClientTransport;
 import org.msgpack.rpc.transport.RpcMessageHandler;
 import org.msgpack.rpc.transport.PooledStreamClientTransport;
 import org.msgpack.type.Value;
 import org.msgpack.unpacker.Unpacker;
 
-class NettyTcpClientTransport extends PooledStreamClientTransport<Channel, OutputStream> {
+class NettyTcpClientTransport implements ClientTransport {
 
     private ByteBufOutputStream _bufOutput;
+
+    private final Session _session;
     private final Bootstrap bootstrap;
     private final ConcurrentLinkedQueue<Channel> _channels;
 
@@ -53,8 +56,6 @@ class NettyTcpClientTransport extends PooledStreamClientTransport<Channel, Outpu
                             final NettyEventLoop loop) {
 
         // TODO check session.getAddress() instanceof IPAddress
-        super(config, session);
-
         final RpcMessageHandler handler = new RpcMessageHandler(session);
 
         final EventLoopGroup workerGroup = new NioEventLoopGroup();
@@ -74,41 +75,14 @@ class NettyTcpClientTransport extends PooledStreamClientTransport<Channel, Outpu
             }
         });
 
+        _session = session;
         _channels = new ConcurrentLinkedQueue<Channel>();
     }
 
-    private final ChannelFutureListener connectListener = new ChannelFutureListener() {
-
-        public void operationComplete(ChannelFuture future) throws Exception {
-            if (!future.isSuccess()) {
-                onConnectFailed(future.channel(), future.cause());
-                return;
-            }
-
-            Channel c = future.channel();
-
-            c.closeFuture().addListener(closeListener);
-
-            onConnected(c);
-        }
-    };
-
-    private final ChannelFutureListener closeListener = new ChannelFutureListener() {
-
-        public void operationComplete(ChannelFuture future) throws Exception {
-
-            System.out.println("[client transport] channel closed!!!");
-
-            onClosed(future.channel());
-        }
-    };
-
-    @Override
     protected ChannelFuture startConnection() {
-        return bootstrap.connect(session.getAddress().getSocketAddress()).addListener(connectListener);
+        return bootstrap.connect(_session.getAddress().getSocketAddress());
     }
 
-    @Override
     public void sendMessage(final Object msg) {
 
         if(_channels.isEmpty()){
@@ -126,48 +100,29 @@ class NettyTcpClientTransport extends PooledStreamClientTransport<Channel, Outpu
         }
     }
 
-    @Override
-    protected OutputStream newPendingBuffer() {
+    public void close(){
 
-        return _bufOutput = new ByteBufOutputStream(UnpooledByteBufAllocator.DEFAULT.heapBuffer(1024 * 1024));
+        System.out.println("[client transport] closing channels:" + _channels.size());
+
+        while(!_channels.isEmpty()){
+               _channels.poll().close();
+        }
+
     }
 
-    @Override
-    protected void resetPendingBuffer(OutputStream b) {
-        _bufOutput.buffer().resetReaderIndex();
-        _bufOutput.buffer().resetWriterIndex();
-    }
-
-    @Override
-    protected void flushPendingBuffer(OutputStream b, Channel c) {
-        c.write(_bufOutput.buffer());
-        _bufOutput.buffer().resetReaderIndex();
-        _bufOutput.buffer().resetWriterIndex();
-    }
-
-    @Override
-    protected void closePendingBuffer(OutputStream b) {
-        _bufOutput.buffer().resetReaderIndex();
-        _bufOutput.buffer().resetWriterIndex();
-    }
-
-    @Override
     protected ChannelFuture sendMessageChannel(Channel c, Object msg) {
 
-        System.out.println("[client transport] send message");
+        //System.out.println("[client transport] send message");
 
         return c.writeAndFlush(msg).addListener(new ChannelFutureListener() {
 
             public void operationComplete(ChannelFuture future) throws Exception {
 
+                //System.out.println("[client transport] message sent!!!");
+
                 _channels.offer(future.channel());
             }
         });
-    }
-
-    @Override
-    protected void closeChannel(Channel c) {
-        c.close();
     }
 
     static class MessagePackDecoder extends ByteToMessageDecoder {
@@ -183,19 +138,21 @@ class NettyTcpClientTransport extends PooledStreamClientTransport<Channel, Outpu
                               final ByteBuf byteBuf,
                               final List<Object> out) throws Exception {
 
-            System.out.printf("[client transport] decode got bytebuf\n");
+            //System.out.printf("[client transport] decode got bytebuf\n");
 
-            final ByteBuffer buffer = byteBuf.markReaderIndex().nioBuffer();
+            final ByteBuffer buffer = byteBuf.markReaderIndex().nioBuffer().slice();
 
             try{
                 Unpacker unpacker = _msgpack.createBufferUnpacker(buffer);
                 out.add(unpacker.readValue());
 
-                System.out.printf("[client transport] decode done\n");
+                //System.out.printf("[client transport] decode done\n");
 
                 byteBuf.skipBytes(buffer.position());
             }
             catch( EOFException e ){
+
+                //System.out.println("[client transport] not enough bytebuf");
 
                 byteBuf.resetReaderIndex();
             }
@@ -213,9 +170,11 @@ class NettyTcpClientTransport extends PooledStreamClientTransport<Channel, Outpu
         @Override
         protected void encode(ChannelHandlerContext ctx, Value msg, ByteBuf out) throws Exception {
 
-            System.out.println("[client transport] encoding msg of Value");
+            //System.out.println("[client transport] encoding msg of Value");
 
             _msgpack.createPacker(new ByteBufOutputStream(out)).write(msg);
+
+            ctx.flush();
         }
     }
 
@@ -230,9 +189,19 @@ class NettyTcpClientTransport extends PooledStreamClientTransport<Channel, Outpu
         @Override
         protected void encode(ChannelHandlerContext ctx, MessagePackable msg, ByteBuf out) throws Exception {
 
-            System.out.println("[client transport] encoding msg of Value from packable encoder");
+            //System.out.println("[client transport] encoding msg of Value from packable encoder");
 
             msg.writeTo(_msgpack.createPacker(new ByteBufOutputStream(out)));
+        }
+
+        @Override
+        public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+
+            super.write(ctx, msg, promise);
+
+            ctx.flush();
+
+            //System.out.println("[server transport] encoding msg of Value from packable encoder [flushed]");
         }
     }
 
@@ -247,11 +216,18 @@ class NettyTcpClientTransport extends PooledStreamClientTransport<Channel, Outpu
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) {
 
-            System.out.printf("[client transport] message handler got msg: " + msg.getClass().getName());
+            //System.out.printf("[client transport] message handler got msg: " + msg.getClass().getName());
 
             Value value = (Value) msg;
 
             _rpcHandler.handleMessage(new ChannelAdaptor(ctx.channel()), value);
+        }
+
+        @Override
+        public void exceptionCaught(final ChannelHandlerContext ctx, Throwable cause) throws Exception {
+
+            cause.printStackTrace();
+            ctx.close();
         }
     }
 }

@@ -92,22 +92,22 @@ class NettyTcpServerTransport implements ServerTransport {
                               final ByteBuf byteBuf,
                               final List<Object> out) throws Exception {
 
-            System.out.println("[server transport] got bytebuf to decode");
+            //System.out.println("[server transport] got bytebuf to decode");
 
-            final ByteBuffer buffer = byteBuf.markReaderIndex().nioBuffer();
+            final ByteBuffer buffer = byteBuf.markReaderIndex().nioBuffer().slice();
 
             try{
                 Unpacker unpacker = _msgpack.createBufferUnpacker(buffer);
 
                 out.add(unpacker.readValue());
 
-                System.out.println("[server transport] feed value to the next");
+                //System.out.println("[server transport] feed value to the next");
 
-                //byteBuf.skipBytes(buffer.position());
+                byteBuf.skipBytes(buffer.position());
             }
             catch( EOFException e ){
 
-                System.out.println("[server transport] not enough bytebuf");
+                //System.out.println("[server transport] not enough bytebuf");
 
                 byteBuf.resetReaderIndex();
             }
@@ -125,9 +125,11 @@ class NettyTcpServerTransport implements ServerTransport {
         @Override
         protected void encode(ChannelHandlerContext ctx, Value msg, ByteBuf out) throws Exception {
 
-            System.out.println("[server transport] encoding msg of Value");
+            //System.out.println("[server transport] encoding msg of Value");
 
             _msgpack.createPacker(new ByteBufOutputStream(out)).write(msg);
+
+            ctx.flush();
         }
     }
 
@@ -142,11 +144,21 @@ class NettyTcpServerTransport implements ServerTransport {
         @Override
         protected void encode(ChannelHandlerContext ctx, MessagePackable msg, ByteBuf out) throws Exception {
 
-            System.out.println("[server transport] encoding msg of Value from packable encoder");
+            //System.out.println("[server transport] encoding msg of Value from packable encoder");
 
             msg.writeTo(_msgpack.createPacker(new ByteBufOutputStream(out)));
 
-            System.out.println("[server transport] encoding msg of Value from packable encoder [written]");
+            //System.out.println("[server transport] encoding msg of Value from packable encoder [written]");
+        }
+
+        @Override
+        public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+
+            super.write(ctx, msg, promise);
+
+            ctx.flush();
+
+            //System.out.println("[server transport] encoding msg of Value from packable encoder [flushed]");
         }
     }
 
@@ -161,11 +173,18 @@ class NettyTcpServerTransport implements ServerTransport {
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) {
 
-            System.out.println("[server transport] got message decoded: " + msg.getClass().getName());
+            //System.out.println("[server transport] got message decoded: " + msg.getClass().getName());
 
             Value value = (Value) msg;
 
             _rpcHandler.handleMessage(new ChannelAdaptor(ctx.channel()), value);
+        }
+
+        @Override
+        public void exceptionCaught(final ChannelHandlerContext ctx, Throwable cause) throws Exception {
+
+            cause.printStackTrace();
+            ctx.close();
         }
     }
 

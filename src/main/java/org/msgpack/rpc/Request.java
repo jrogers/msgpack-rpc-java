@@ -22,7 +22,9 @@ import org.msgpack.rpc.message.ResponseMessage;
 import org.msgpack.rpc.transport.MessageSendable;
 
 public class Request implements Callback<Object> {
+
     private MessageSendable channel; // TODO #SF synchronized?
+
     private int msgid;
     private String method;
     private Value args;
@@ -66,11 +68,10 @@ public class Request implements Callback<Object> {
     }
 
     public synchronized void sendResponse(Object result, Object error) {
+
         if (channel == null) {
             return;
         }
-
-        System.out.println("[response] to request:" + msgid);
 
         ResponseMessage msg = new ResponseMessage(msgid, error, result);
         channel.sendMessage(msg);

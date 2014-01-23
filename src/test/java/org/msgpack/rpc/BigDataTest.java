@@ -12,9 +12,9 @@ import org.msgpack.type.ValueFactory;
 public class BigDataTest extends TestCase {
 	
     private static String getBigString() {
-        StringBuilder sb = new StringBuilder(1024 * 1024); // 1M
+        StringBuilder sb = new StringBuilder(1024); // 1M
         Random random = new Random();
-        for(int i = 0;i < 1024 * 1024;i++){
+        for(int i = 0;i < 1024;i++){
             sb.append( (char)('a' + random.nextInt(26)));
         }
         return sb.toString();
@@ -34,18 +34,18 @@ public class BigDataTest extends TestCase {
 
 	@Test
 	public void testSyncBigDataLoad() throws Exception {
+
         MessagePack messagePack = new MessagePack();
 		EventLoop loop = EventLoop.start(messagePack);
 		Server svr = new Server(loop);
 		Client c = new Client("127.0.0.1", 19851, loop);
-		c.setRequestTimeout(10);
-
+		c.setRequestTimeout(100);
 
 		try {
 			svr.serve(new BigDataDispatcher());
 			svr.listen(19851);
 
-			int num = 1;
+			int num = 5;
 
 			long start = System.currentTimeMillis();
 			for(int i=0; i < num; i++) {
@@ -65,35 +65,34 @@ public class BigDataTest extends TestCase {
 		}
     }
 
-//	@Ignore
-//    @Test
-//	public void testAsyncBigDataLoad() throws Exception {
-//		EventLoop loop = EventLoop.start();
-//		Server svr = new Server(loop);
-//		Client c = new Client("127.0.0.1", 19852, loop);
-//		c.setRequestTimeout(100);//
-//
-//		try {
-//			svr.serve(new BigDataDispatcher());
-//			svr.listen(19852);
-//
-//			int num = 10;
-//
-//			long start = System.currentTimeMillis();
-//			for(int i=0; i < num-1; i++) {
-//				c.notifyApply("test", new Object[]{BIG_DATA});
-//			}
-//			c.callApply("test", new Object[]{BIG_DATA});
-//			long finish = System.currentTimeMillis();
-//
-//			double result = num / ((double)(finish - start) / 1000);
-//			System.out.println("async: "+result+" calls per sec");
-//
-//		} finally {
-//			svr.close();
-//			c.close();
-//			loop.shutdown();
-//		}
-//	}
+    @Test
+	public void testAsyncBigDataLoad() throws Exception {
+		EventLoop loop = EventLoop.start();
+		Server svr = new Server(loop);
+		Client c = new Client("127.0.0.1", 19852, loop);
+		c.setRequestTimeout(100);//
+
+		try {
+			svr.serve(new BigDataDispatcher());
+			svr.listen(19852);
+
+			int num = 10;
+
+			long start = System.currentTimeMillis();
+			for(int i=0; i < num-1; i++) {
+				c.notifyApply("test", new Object[]{BIG_DATA});
+			}
+			c.callApply("test", new Object[]{BIG_DATA});
+			long finish = System.currentTimeMillis();
+
+			double result = num / ((double)(finish - start) / 1000);
+			System.out.println("async: "+result+" calls per sec");
+
+		} finally {
+			svr.close();
+			c.close();
+			loop.shutdown();
+		}
+	}
 }
 
