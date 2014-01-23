@@ -13,6 +13,7 @@ class MessagePackableEncoder extends MessageToByteEncoder<MessagePackable> {
     private final MessagePack _msgpack;
 
     public MessagePackableEncoder(final MessagePack msgpack){
+
         _msgpack = msgpack;
     }
 
@@ -20,13 +21,5 @@ class MessagePackableEncoder extends MessageToByteEncoder<MessagePackable> {
     protected void encode(ChannelHandlerContext ctx, MessagePackable msg, ByteBuf out) throws Exception {
 
         msg.writeTo(_msgpack.createPacker(new ByteBufOutputStream(out)));
-    }
-
-    @Override
-    public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-
-        super.write(ctx, msg, promise);
-
-        ctx.flush();
     }
 }

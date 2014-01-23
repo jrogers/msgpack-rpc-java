@@ -19,7 +19,5 @@ class MessagePackEncoder extends MessageToByteEncoder<Value> {
     protected void encode(ChannelHandlerContext ctx, Value msg, ByteBuf out) throws Exception {
 
         _msgpack.createPacker(new ByteBufOutputStream(out)).write(msg);
-
-        ctx.flush();
     }
 }

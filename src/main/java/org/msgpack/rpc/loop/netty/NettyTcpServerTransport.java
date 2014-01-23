@@ -30,7 +30,7 @@ import org.msgpack.rpc.address.Address;
 
 class NettyTcpServerTransport implements ServerTransport {
 
-    private ChannelFuture channelFuture;
+    private final ChannelFuture channelFuture;
 
     NettyTcpServerTransport(final TcpServerConfig config,
                             final Server server,
@@ -40,28 +40,28 @@ class NettyTcpServerTransport implements ServerTransport {
             throw new IllegalArgumentException("Server must not be null");
         }
 
-        Address address = config.getListenAddress();
-
+        final Address address = config.getListenAddress();
         final RpcMessageHandler handler = new RpcMessageHandler(server);
+
         handler.useThread(true);
 
-        final EventLoopGroup bossGroup = new NioEventLoopGroup(); // (1)
-        final EventLoopGroup workerGroup = new NioEventLoopGroup();
-        final ServerBootstrap b = new ServerBootstrap(); // (2)
-        b.group(bossGroup, workerGroup)
-            .channel(NioServerSocketChannel.class) // (3)
-            .childHandler(new ChannelInitializer<SocketChannel>() { // (4)
-                @Override
-                public void initChannel(SocketChannel ch) throws Exception {
-                    ch.pipeline().addLast(
-                            new MessagePackDecoder(loop.getMessagePack()),
-                            new MessageHandler(handler),
-                            new MessagePackEncoder(loop.getMessagePack()),
-                            new MessagePackableEncoder(loop.getMessagePack()));
-                }
-            })
-            .option(ChannelOption.SO_BACKLOG, 128)          // (5)
-            .childOption(ChannelOption.SO_KEEPALIVE, true); // (6)
+        final EventLoopGroup bossGroup = new NioEventLoopGroup(1); // (1)
+        final EventLoopGroup workerGroup = new NioEventLoopGroup(4);
+        final ServerBootstrap b = new ServerBootstrap()
+                .group(bossGroup, workerGroup)
+                .channel(NioServerSocketChannel.class) // (3)
+                .childHandler(new ChannelInitializer<SocketChannel>() { // (4)
+                    @Override
+                    public void initChannel(SocketChannel ch) throws Exception {
+                        ch.pipeline().addLast(
+                                new MessagePackDecoder(loop.getMessagePack()),
+                                new MessageHandler(handler),
+                                new MessagePackEncoder(loop.getMessagePack()),
+                                new MessagePackableEncoder(loop.getMessagePack()));
+                    }
+                })
+                .option(ChannelOption.SO_BACKLOG, 128)          // (5)
+                .childOption(ChannelOption.SO_KEEPALIVE, true); // (6)
 
         // Bind and start to accept incoming connections.
         channelFuture = b.bind(address.getSocketAddress()).sync(); // (7)

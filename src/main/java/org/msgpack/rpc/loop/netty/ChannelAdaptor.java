@@ -22,17 +22,20 @@ import org.msgpack.rpc.transport.ClientTransport;
 
 class ChannelAdaptor implements ClientTransport {
 
-    private Channel channel;
+    private final Channel _channel;
 
-    ChannelAdaptor(Channel channel) {
-        this.channel = channel;
+    protected ChannelAdaptor(final Channel channel) {
+
+        _channel = channel;
     }
 
     public void sendMessage(Object msg) {
-        channel.write(msg);
+
+        _channel.writeAndFlush(msg);
     }
 
     public void close() {
-        channel.close();
+
+        _channel.close();
     }
 }

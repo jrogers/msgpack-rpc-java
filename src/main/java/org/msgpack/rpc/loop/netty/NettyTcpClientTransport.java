@@ -20,7 +20,6 @@ package org.msgpack.rpc.loop.netty;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.buffer.ByteBufOutputStream;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
@@ -43,10 +42,8 @@ class NettyTcpClientTransport implements ClientTransport {
         // TODO check session.getAddress() instanceof IPAddress
         final RpcMessageHandler handler = new RpcMessageHandler(session);
 
-        final EventLoopGroup workerGroup = new NioEventLoopGroup();
-
         bootstrap = new Bootstrap(); // (1)
-        bootstrap.group(workerGroup); // (2)
+        bootstrap.group(new NioEventLoopGroup(2)); // (2)
         bootstrap.channel(NioSocketChannel.class); // (3)
         bootstrap.option(ChannelOption.SO_KEEPALIVE, true); // (4)
         bootstrap.handler(new ChannelInitializer<SocketChannel>() {
