@@ -23,7 +23,6 @@ import java.util.HashMap;
 import java.lang.reflect.*;
 import org.msgpack.rpc.*;
 import org.msgpack.*;
-import org.msgpack.rpc.loop.netty.MessagePackEncoder;
 import org.msgpack.template.*;
 import org.msgpack.type.Value;
 import org.msgpack.unpacker.Converter;

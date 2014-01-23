@@ -24,6 +24,7 @@ import org.msgpack.rpc.Server;
 import org.msgpack.rpc.loop.EventLoop;
 
 public class RpcMessageHandler {
+
     protected final Session session;
     protected final Server server;
     protected final EventLoop loop;
@@ -42,7 +43,8 @@ public class RpcMessageHandler {
         this.server = server;
         if (session == null) {
             this.loop = server.getEventLoop();
-        } else {
+        }
+        else {
             this.loop = session.getEventLoop();
         }
     }
@@ -77,6 +79,7 @@ public class RpcMessageHandler {
     }
 
     private void handleMessageImpl(MessageSendable channel, Value msg) {
+
         Value[] array = msg.asArrayValue().getElementArray();
 
         // TODO check array.length
@@ -88,20 +91,23 @@ public class RpcMessageHandler {
             Value args = array[3];
             handleRequest(channel, msgid, method, args);
 
-        } else if (type == Messages.RESPONSE) {
+        }
+        else if (type == Messages.RESPONSE) {
             // RESPONSE
             int msgid = array[1].asIntegerValue().getInt();
             Value error = array[2];
             Value result = array[3];
             handleResponse(channel, msgid, result, error);
 
-        } else if (type == Messages.NOTIFY) {
+        }
+        else if (type == Messages.NOTIFY) {
             // NOTIFY
             String method = array[1].asRawValue().getString();
             Value args = array[2];
             handleNotify(channel, method, args);
 
-        } else {
+        }
+        else {
             // FIXME error result
             throw new RuntimeException("unknown message type: " + type);
         }

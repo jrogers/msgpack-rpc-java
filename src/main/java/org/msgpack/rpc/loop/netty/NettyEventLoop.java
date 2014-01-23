@@ -19,10 +19,6 @@ package org.msgpack.rpc.loop.netty;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
-import org.jboss.netty.channel.socket.ClientSocketChannelFactory;
-import org.jboss.netty.channel.socket.ServerSocketChannelFactory;
-import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
-import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.msgpack.MessagePack;
 import org.msgpack.rpc.Session;
 import org.msgpack.rpc.Server;
@@ -39,27 +35,6 @@ public class NettyEventLoop extends EventLoop {
         super(workerExecutor, ioExecutor, scheduledExecutor, messagePack);
     }
 
-    private ClientSocketChannelFactory clientFactory = null;
-    private ServerSocketChannelFactory serverFactory = null;
-
-    public synchronized ClientSocketChannelFactory getClientFactory() {
-        if (clientFactory == null) {
-            clientFactory = new NioClientSocketChannelFactory(getIoExecutor(),
-                    getWorkerExecutor()); // TODO: workerCount
-        }
-        return clientFactory;
-    }
-
-    public synchronized ServerSocketChannelFactory getServerFactory() {
-        if (serverFactory == null) {
-            serverFactory = new NioServerSocketChannelFactory(getIoExecutor(),
-                    getWorkerExecutor()); // TODO: workerCount
-            // messages will be dispatched to worker thread on server.
-            // see useThread(true) in NettyTcpClientTransport().
-        }
-        return serverFactory;
-    }
-
     protected ClientTransport openTcpTransport(TcpClientConfig config,
             Session session) {
         return new NettyTcpClientTransport(config, session, this);
@@ -67,6 +42,13 @@ public class NettyEventLoop extends EventLoop {
 
     protected ServerTransport listenTcpTransport(TcpServerConfig config,
             Server server) {
-        return new NettyTcpServerTransport(config, server, this);
+
+        try{
+            return new NettyTcpServerTransport(config, server, this);
+        }
+        catch(Exception ex){
+            ex.printStackTrace();
+            return null;
+        }
     }
 }

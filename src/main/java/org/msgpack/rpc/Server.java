@@ -106,7 +106,8 @@ public class Server extends SessionPool {
         Request request = new Request(channel, msgid, method, args);
         try {
             dp.dispatch(request);
-        } catch (RPCError e) {
+        }
+        catch (RPCError e) {
             // FIXME
             request.sendError(e.getCode(), e);
         } catch (Exception e) {

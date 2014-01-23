@@ -17,11 +17,11 @@
 //
 package org.msgpack.rpc.loop.netty;
 
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.Channels;
+import io.netty.channel.Channel;
 import org.msgpack.rpc.transport.ClientTransport;
 
 class ChannelAdaptor implements ClientTransport {
+
     private Channel channel;
 
     ChannelAdaptor(Channel channel) {
@@ -29,7 +29,7 @@ class ChannelAdaptor implements ClientTransport {
     }
 
     public void sendMessage(Object msg) {
-        Channels.write(channel, msg);
+        channel.write(msg);
     }
 
     public void close() {

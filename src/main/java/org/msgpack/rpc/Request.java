@@ -69,6 +69,9 @@ public class Request implements Callback<Object> {
         if (channel == null) {
             return;
         }
+
+        System.out.println("[response] to request:" + msgid);
+
         ResponseMessage msg = new ResponseMessage(msgid, error, result);
         channel.sendMessage(msg);
         channel = null;

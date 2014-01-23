@@ -21,9 +21,13 @@ public class BigDataTest extends TestCase {
     }
 
     private static Value BIG_DATA = ValueFactory.createRawValue(getBigString());
+
     public static class BigDataDispatcher implements Dispatcher {
-		public void dispatch(Request request) {
-            assertEquals(BIG_DATA,request.getArguments().asArrayValue().get(0) );
+
+        public void dispatch(Request request) {
+
+            assertEquals(BIG_DATA, request.getArguments().asArrayValue().get(0) );
+
 			request.sendResult(BIG_DATA);
 		}
 	}
@@ -41,7 +45,7 @@ public class BigDataTest extends TestCase {
 			svr.serve(new BigDataDispatcher());
 			svr.listen(19851);
 
-			int num = 5;
+			int num = 1;
 
 			long start = System.currentTimeMillis();
 			for(int i=0; i < num; i++) {
@@ -53,40 +57,43 @@ public class BigDataTest extends TestCase {
 			double result = num / ((double)(finish - start) / 1000);
 			System.out.println("sync: "+result+" calls per sec");
 
-		} finally {
+		}
+        finally {
 			svr.close();
 			c.close();
 			loop.shutdown();
 		}
     }
-	@Test
-	public void testAsyncBigDataLoad() throws Exception {
-		EventLoop loop = EventLoop.start();
-		Server svr = new Server(loop);
-		Client c = new Client("127.0.0.1", 19852, loop);
-		c.setRequestTimeout(100);//
 
-		try {
-			svr.serve(new BigDataDispatcher());
-			svr.listen(19852);
-
-			int num = 10;
-
-			long start = System.currentTimeMillis();
-			for(int i=0; i < num-1; i++) {
-				c.notifyApply("test", new Object[]{BIG_DATA});
-			}
-			c.callApply("test", new Object[]{BIG_DATA});
-			long finish = System.currentTimeMillis();
-
-			double result = num / ((double)(finish - start) / 1000);
-			System.out.println("async: "+result+" calls per sec");
-
-		} finally {
-			svr.close();
-			c.close();
-			loop.shutdown();
-		}
-	}
+//	@Ignore
+//    @Test
+//	public void testAsyncBigDataLoad() throws Exception {
+//		EventLoop loop = EventLoop.start();
+//		Server svr = new Server(loop);
+//		Client c = new Client("127.0.0.1", 19852, loop);
+//		c.setRequestTimeout(100);//
+//
+//		try {
+//			svr.serve(new BigDataDispatcher());
+//			svr.listen(19852);
+//
+//			int num = 10;
+//
+//			long start = System.currentTimeMillis();
+//			for(int i=0; i < num-1; i++) {
+//				c.notifyApply("test", new Object[]{BIG_DATA});
+//			}
+//			c.callApply("test", new Object[]{BIG_DATA});
+//			long finish = System.currentTimeMillis();
+//
+//			double result = num / ((double)(finish - start) / 1000);
+//			System.out.println("async: "+result+" calls per sec");
+//
+//		} finally {
+//			svr.close();
+//			c.close();
+//			loop.shutdown();
+//		}
+//	}
 }
 

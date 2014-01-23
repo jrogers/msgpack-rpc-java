@@ -22,8 +22,9 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jboss.netty.logging.InternalLogger;
-import org.jboss.netty.logging.InternalLoggerFactory;
+import io.netty.channel.ChannelFuture;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 import org.msgpack.rpc.Session;
 import org.msgpack.rpc.config.StreamClientConfig;
 import org.msgpack.MessagePack;
@@ -71,9 +72,11 @@ public abstract class PooledStreamClientTransport<Channel, PendingBuffer extends
                 if (pool.isEmpty()) { // may be already connected
                     try {
                         messagePack.write(getPendingBuffer(), msg);
-                    } catch (IOException e) {
+                    }
+                    catch (IOException e) {
                         // FIXME
                     }
+                    flushPendingBuffer(getPendingBuffer(), pool.get(0));
                     return;
                 }
             }
@@ -171,9 +174,9 @@ public abstract class PooledStreamClientTransport<Channel, PendingBuffer extends
 
     protected abstract void closePendingBuffer(PendingBuffer b);
 
-    protected abstract void startConnection();
+    protected abstract ChannelFuture startConnection();
 
-    protected abstract void sendMessageChannel(Channel c, Object msg);
+    protected abstract ChannelFuture sendMessageChannel(Channel c, Object msg);
 
     protected abstract void closeChannel(Channel c);
 }

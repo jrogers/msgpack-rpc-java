@@ -20,5 +20,6 @@ package org.msgpack.rpc.dispatcher;
 import org.msgpack.rpc.Request;
 
 public interface Dispatcher {
+
     void dispatch(Request request) throws Exception;
 }
