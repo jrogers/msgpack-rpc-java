@@ -33,7 +33,7 @@ class NettyTcpClientTransport implements ClientTransport {
 
     private final Session _session;
     private final Bootstrap bootstrap;
-    private final ConcurrentLinkedQueue<Channel> _channels;
+    private final ConcurrentLinkedQueue<Channel> _writables;
 
     NettyTcpClientTransport(final TcpClientConfig config,
                             final Session session,
@@ -42,23 +42,25 @@ class NettyTcpClientTransport implements ClientTransport {
         // TODO check session.getAddress() instanceof IPAddress
         final RpcMessageHandler handler = new RpcMessageHandler(session);
 
-        bootstrap = new Bootstrap(); // (1)
-        bootstrap.group(new NioEventLoopGroup(2)); // (2)
-        bootstrap.channel(NioSocketChannel.class); // (3)
-        bootstrap.option(ChannelOption.SO_KEEPALIVE, true); // (4)
-        bootstrap.handler(new ChannelInitializer<SocketChannel>() {
-            @Override
-            public void initChannel(SocketChannel ch) throws Exception {
-                ch.pipeline().addLast(
-                        new MessagePackDecoder(loop.getMessagePack()),
-                        new MessageHandler(handler),
-                        new MessagePackEncoder(loop.getMessagePack()),
-                        new MessagePackableEncoder(loop.getMessagePack()));
-            }
-        });
+        bootstrap = new Bootstrap()
+            .group(new NioEventLoopGroup(2))
+            .channel(NioSocketChannel.class)
+            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, Math.round((float)config.getConnectTimeout()))
+            .option(ChannelOption.TCP_NODELAY, !Boolean.FALSE.equals(config.getOption(ChannelOption.TCP_NODELAY.name())))
+            .option(ChannelOption.SO_KEEPALIVE, !Boolean.FALSE.equals(config.getOption(ChannelOption.SO_KEEPALIVE.name())))
+            .handler(new ChannelInitializer<SocketChannel>() {
+                @Override
+                public void initChannel(SocketChannel ch) throws Exception {
+                    ch.pipeline().addLast(
+                            new MessagePackDecoder(loop.getMessagePack()),
+                            new MessageHandler(handler),
+                            new MessagePackEncoder(loop.getMessagePack()),
+                            new MessagePackableEncoder(loop.getMessagePack()));
+                }
+            });
 
         _session = session;
-        _channels = new ConcurrentLinkedQueue<Channel>();
+        _writables = new ConcurrentLinkedQueue<Channel>();
     }
 
     protected ChannelFuture startConnection() {
@@ -67,7 +69,7 @@ class NettyTcpClientTransport implements ClientTransport {
 
     public void sendMessage(final Object msg) {
 
-        if(_channels.isEmpty()){
+        if(_writables.isEmpty()){
 
             startConnection().addListener(new ChannelFutureListener() {
 
@@ -78,16 +80,16 @@ class NettyTcpClientTransport implements ClientTransport {
             });
         }
         else{
-            sendMessageChannel(_channels.poll(), msg);
+            sendMessageChannel(_writables.poll(), msg);
         }
     }
 
     public void close(){
 
-        System.out.println("[client transport] closing channels:" + _channels.size());
+        System.out.println("[client transport] closing channels:" + _writables.size());
 
-        while(!_channels.isEmpty()){
-               _channels.poll().close();
+        while(!_writables.isEmpty()){
+               _writables.poll().close();
         }
 
     }
@@ -102,7 +104,7 @@ class NettyTcpClientTransport implements ClientTransport {
 
                 //System.out.println("[client transport] message sent!!!");
 
-                _channels.offer(future.channel());
+                _writables.offer(future.channel());
             }
         });
     }

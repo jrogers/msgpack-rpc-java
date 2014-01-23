@@ -61,7 +61,8 @@ class NettyTcpServerTransport implements ServerTransport {
                     }
                 })
                 .option(ChannelOption.SO_BACKLOG, 128)          // (5)
-                .childOption(ChannelOption.SO_KEEPALIVE, true); // (6)
+                .childOption(ChannelOption.TCP_NODELAY, !Boolean.FALSE.equals(config.getOption(ChannelOption.TCP_NODELAY.name())))
+                .childOption(ChannelOption.SO_KEEPALIVE, !Boolean.FALSE.equals(config.getOption(ChannelOption.SO_KEEPALIVE.name())));
 
         // Bind and start to accept incoming connections.
         channelFuture = b.bind(address.getSocketAddress()).sync(); // (7)
