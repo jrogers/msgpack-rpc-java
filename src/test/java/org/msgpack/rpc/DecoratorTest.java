@@ -1,7 +1,6 @@
 package org.msgpack.rpc;
 
 import junit.framework.TestCase;
-import org.apache.log4j.BasicConfigurator;
 import org.junit.Test;
 import org.msgpack.MessageTypeException;
 import org.msgpack.rpc.builder.StopWatchDispatcherBuilder;
@@ -32,8 +31,6 @@ public class DecoratorTest extends TestCase {
      */
     @Test
     public void testDecorateStopWatch()  throws Exception {
-
-        BasicConfigurator.configure();
         EventLoop loop = EventLoop.start();
         Server svr = new Server(loop);
         svr.setDispatcherBuilder(

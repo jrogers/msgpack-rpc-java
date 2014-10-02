@@ -1,7 +1,6 @@
 package org.msgpack.rpc;
 
 import junit.framework.TestCase;
-import org.apache.log4j.BasicConfigurator;
 import org.junit.Test;
 import org.msgpack.MessageTypeException;
 import org.msgpack.rpc.builder.StopWatchDispatcherBuilder;
@@ -48,8 +47,6 @@ public class ServerErrorTest  extends TestCase {
     }
 
     void call( CallFunc func)  throws Exception{
-
-        BasicConfigurator.configure();
         EventLoop loop = EventLoop.start();
         Server svr = new Server(loop);
         Client c = new Client("127.0.0.1", 19850, loop);

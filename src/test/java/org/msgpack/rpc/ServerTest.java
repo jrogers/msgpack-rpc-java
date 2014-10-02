@@ -17,7 +17,6 @@
 //
 package org.msgpack.rpc;
 
-import org.apache.log4j.BasicConfigurator;
 import org.msgpack.*;
 import org.msgpack.rpc.*;
 import org.msgpack.rpc.builder.StopWatchDispatcherBuilder;
