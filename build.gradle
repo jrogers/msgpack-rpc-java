@@ -4,14 +4,13 @@ apply plugin: 'maven'
 group = 'org.msgpack'
 version = '0.7.1-SNAPSHOT'
 
-description = """msgpack-rpc"""
+description = "msgpack-rpc"
 
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
 
 repositories {
-     maven { url "https://repository.jboss.org/nexus/content/groups/public/" }
-     maven { url "http://repo.maven.apache.org/maven2" }
+    mavenCentral()
 }
 
 dependencies {
