@@ -84,6 +84,7 @@ public class ReflectionProxyBuilder extends ProxyBuilder {
 			this.entryMap = entryMap;
 		}
 
+		@SuppressWarnings("unchecked")
 		public Object invoke(Object proxy, Method method, Object[] args) {
 			ReflectionMethodEntry e = entryMap.get(method);
 			if(e == null) {
@@ -122,6 +123,7 @@ public class ReflectionProxyBuilder extends ProxyBuilder {
 			this.entryMap = entryMap;
 		}
 
+		@SuppressWarnings("unchecked")
 		public T newProxyInstance(Session s) {
 			ReflectionHandler handler = new ReflectionHandler(s, entryMap);
 			return (T)java.lang.reflect.Proxy.newProxyInstance(

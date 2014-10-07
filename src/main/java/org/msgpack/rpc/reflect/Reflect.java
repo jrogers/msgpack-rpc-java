@@ -26,10 +26,10 @@ import java.lang.reflect.Method;
 public class Reflect {
     /*
      * private static final Reflect instance = new Reflect();
-     * 
+     *
      * public static <T> Proxy<T> reflectProxy(Class<T> iface) { return
      * instance.getProxy(iface); }
-     * 
+     *
      * public static Invoker reflectInvoker(Method method) { return
      * instance.getInvoker(method); }
      */
@@ -51,6 +51,7 @@ public class Reflect {
         this.proxyBuilder = proxyBuilder;
     }
 
+    @SuppressWarnings("unchecked")
     public synchronized <T> Proxy<T> getProxy(Class<T> iface) {
         Proxy<?> proxy = proxyCache.get(iface);
         if (proxy == null) {

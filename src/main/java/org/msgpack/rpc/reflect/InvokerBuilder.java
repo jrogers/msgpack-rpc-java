@@ -180,13 +180,13 @@ public abstract class InvokerBuilder {
 
         /*
          * index:
-         * 
+         *
          * @Index(0) int field_a; // 0
          * int field_b; // 1
-         * 
+         *
          * @Index(3) int field_c; // 3
          * int field_d; // 4
-         * 
+         *
          * @Index(2) int field_e; // 2
          * int field_f; // 5
          */
@@ -280,6 +280,7 @@ public abstract class InvokerBuilder {
         return getAnnotation(array, with) != null;
     }
 
+    @SuppressWarnings("unchecked")
     private static <T extends Annotation> T getAnnotation(Annotation[] array,
             Class<T> key) {
         for (Annotation a : array) {

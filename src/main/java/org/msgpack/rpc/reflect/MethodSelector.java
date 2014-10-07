@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 public class MethodSelector {
+    @SuppressWarnings("unchecked")
     public static Method[] selectRpcServerMethod(Class<?> iface) {
         List<Method> methods = new ArrayList();
         for (Method method : iface.getDeclaredMethods()) {
@@ -32,6 +33,7 @@ public class MethodSelector {
         return methods.toArray(new Method[0]);
     }
 
+    @SuppressWarnings("unchecked")
     public static Method[] selectRpcClientMethod(Class<?> iface) {
         List<Method> methods = new ArrayList();
         for (Method method : iface.getMethods()) {

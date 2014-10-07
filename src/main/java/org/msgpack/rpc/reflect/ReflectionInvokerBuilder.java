@@ -129,6 +129,7 @@ public class ReflectionInvokerBuilder extends InvokerBuilder {
             this.messagePack = messagePack;
 		}
 
+		@SuppressWarnings("unchecked")
 		public void convert(Object[] params, Value obj) throws MessageTypeException {
             try {
                 params[getIndex()] = template.read(new Converter(messagePack,obj),null);//messagePack.convert(obj,template);

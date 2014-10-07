@@ -93,6 +93,7 @@ public class Future<V> implements java.util.concurrent.Future<V> {
         return false;
     }
 
+    @SuppressWarnings("unchecked")
     public V getResult() {
         Value result = impl.getResult();
         if (resultTemplate == null) {
