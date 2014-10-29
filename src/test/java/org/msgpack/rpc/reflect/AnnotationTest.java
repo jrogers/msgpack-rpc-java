@@ -77,31 +77,13 @@ public class AnnotationTest extends ReflectTest {
 		}
 	}
 
-	@Test
-    public void testIgnoreClientOmitServer2() throws Exception {
-        Context context = startServer2(new OmitTestHandler());
-        IgnoreTest c = context.getClient().proxy(IgnoreTest.class);
-        try {
-            String result;
-
-            result = c.m01("a0", "a1");
-            assertEquals("a0", result);
-
-            result = c.m02("a0", "a1");
-            assertEquals("a1", result);
-
-        } finally {
-            context.close();
-        }
-    }
-
     @Test
 	public void testOmitClientIgnoreServer() throws Exception {
 		Context context = startServer(new IgnoreTestHandler());
 		OmitTest c = context.getClient().proxy(OmitTest.class);
 		try {
 			String result;
-			
+
 			result = c.m01("a0");
 			assertEquals(""+"a0"+null, result);
 
@@ -112,24 +94,6 @@ public class AnnotationTest extends ReflectTest {
 			context.close();
 		}
 	}
-
-    @Test
-    public void testOmitClientIgnoreServer2() throws Exception {
-        Context context = startServer2(new IgnoreTestHandler());
-        OmitTest c = context.getClient().proxy(OmitTest.class);
-        try {
-            String result;
-            
-            result = c.m01("a0");
-            assertEquals(""+"a0"+null, result);
-
-            result = c.m02("a0");
-            assertEquals(""+null+"a0", result);
-
-        } finally {
-            context.close();
-        }
-    }
 
 	public static interface OptionalTestV1 {
 		public String m01(String a0);
@@ -162,21 +126,6 @@ public class AnnotationTest extends ReflectTest {
 	}
 
 	@Test
-    public void testOptionalV12() throws Exception {
-        Context context = startServer2(new OptionalTestHandler());
-        OptionalTestV1 c = context.getClient().proxy(OptionalTestV1.class);
-        try {
-            String result;
-
-            result = c.m01("a0");
-            assertEquals(""+"a0"+null, result);
-
-        } finally {
-            context.close();
-        }
-    }
-
-	@Test
 	public void testOptionalV2() throws Exception {
 		Context context = startServer(new OptionalTestHandler());
 		OptionalTestV2 c = context.getClient().proxy(OptionalTestV2.class);
@@ -190,21 +139,6 @@ public class AnnotationTest extends ReflectTest {
 			context.close();
 		}
 	}
-
-	@Test
-    public void testOptionalV22() throws Exception {
-        Context context = startServer2(new OptionalTestHandler());
-        OptionalTestV2 c = context.getClient().proxy(OptionalTestV2.class);
-        try {
-            String result;
-
-            result = c.m01("a0", "a1");
-            assertEquals(""+"a0"+"a1", result);
-
-        } finally {
-            context.close();
-        }
-    }
 
 	public static interface IndexTestV1 {
 		public String m01(String a0);
@@ -272,27 +206,6 @@ public class AnnotationTest extends ReflectTest {
 	}
 
 	@Test
-    public void testIndexV1ClientV2Server2() throws Exception {
-        Context context = startServer2(new IndexTestHandlerV2());
-        IndexTestV1 c = context.getClient().proxy(IndexTestV1.class);
-        try {
-            String result;
-
-            result = c.m01("a0");
-            assertEquals(""+"a0"+null, result);
-
-            result = c.m02("a0");
-            assertEquals(""+null+null, result);
-
-            result = c.m03("a0");
-            assertEquals(""+"a0"+null, result);
-
-        } finally {
-            context.close();
-        }
-    }
-
-	@Test
 	public void testIndexV2ClientV1Server() throws Exception {
 		Context context = startServer(new IndexTestHandlerV1());
 		IndexTestV2 c = context.getClient().proxy(IndexTestV2.class);
@@ -314,27 +227,6 @@ public class AnnotationTest extends ReflectTest {
 	}
 
 	@Test
-    public void testIndexV2ClientV1Server2() throws Exception {
-        Context context = startServer2(new IndexTestHandlerV1());
-        IndexTestV2 c = context.getClient().proxy(IndexTestV2.class);
-        try {
-            String result;
-
-            result = c.m01("a1", "a0");
-            assertEquals(""+"a0", result);
-
-            result = c.m02("a1", "a2");
-            assertEquals(""+null, result);
-
-            result = c.m03("a1", "a0");
-            assertEquals(""+"a0", result);
-
-        } finally {
-            context.close();
-        }
-    }
-
-	@Test
 	public void testIndexV2FullClientV2Server() throws Exception {
 		Context context = startServer(new IndexTestHandlerV2());
 		IndexTestV2Full c = context.getClient().proxy(IndexTestV2Full.class);
@@ -354,26 +246,5 @@ public class AnnotationTest extends ReflectTest {
 			context.close();
 		}
 	}
-
-	@Test
-    public void testIndexV2FullClientV2Server2() throws Exception {
-        Context context = startServer2(new IndexTestHandlerV2());
-        IndexTestV2Full c = context.getClient().proxy(IndexTestV2Full.class);
-        try {
-            String result;
-
-            result = c.m01("a0", "a1");
-            assertEquals(""+"a0"+"a1", result);
-
-            result = c.m02("a0", "a1", "a2");
-            assertEquals(""+"a1"+"a2", result);
-
-            result = c.m03("a0", "a1");
-            assertEquals(""+"a0"+"a1", result);
-
-        } finally {
-            context.close();
-        }
-    }
 }
 

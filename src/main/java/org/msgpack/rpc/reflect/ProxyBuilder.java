@@ -72,31 +72,6 @@ public abstract class ProxyBuilder {
 		return buildProxy(iface, entries);
 	}
 
-    /*
-	private static ProxyBuilder instance;
-
-	synchronized private static ProxyBuilder getInstance() {
-		if(instance == null) {
-			instance = selectDefaultProxyBuilder();
-		}
-		return instance;
-	}
-
-
-	private static ProxyBuilder selectDefaultProxyBuilder() {
-		// TODO
-		//try {
-		//	// FIXME JavassistProxyBuilder doesn't work on DalvikVM
-		//	if(System.getProperty("java.vm.name").equals("Dalvik")) {
-		//		return ReflectionProxyBuilder.getInstance();
-		//	}
-		//} catch (Exception e) {
-		//}
-        //return JavassistProxyBuilder.getInstance();
-		return new ReflectionProxyBuilder(messagePack);
-	}*/
-
-
 	static boolean isAsyncMethod(Method targetMethod) {
 		// return type is Future<T>
 		return targetMethod.getReturnType().equals( org.msgpack.rpc.Future.class ) ||
@@ -144,4 +119,3 @@ public abstract class ProxyBuilder {
 		return result;
 	}
 }
-

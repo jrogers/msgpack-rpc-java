@@ -137,21 +137,8 @@ public abstract class InvokerBuilder {
 
     private static InvokerBuilder selectDefaultInvokerBuilder(
             MessagePack messagePack) {
-        // try {
-        // // FIXME JavassistInvokerBuilder doesn't work on DalvikVM
-        // if(System.getProperty("java.vm.name").equals("Dalvik")) {
-        // return ReflectionInvokerBuilder.getInstance();
-        // }
-        // } catch (Exception e) {
-        // }
-        // return JavassistInvokerBuilder.getInstance();
         return new ReflectionInvokerBuilder(messagePack);
     }
-
-    // public static Invoker build(Method targetMethod, ArgumentList alist)
-    // throws NoSuchFieldException {
-    // return getInstance().buildInvoker(targetMethod, alist);
-    // }
 
     static boolean isAsyncMethod(Method targetMethod) {
         final Class<?>[] types = targetMethod.getParameterTypes();

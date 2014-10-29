@@ -147,22 +147,6 @@ public abstract class ReflectTest extends TestCase {
 		return new Context(svr, c, port++);
 	}
 
-	public synchronized Context startServer2(Object handler) throws Exception {
-	    Server svr = new Server(EventLoop.defaultEventLoop());
-	    Client c = new Client("127.0.0.1", port);
-	    c.setRequestTimeout(10);
-	    try {
-	        svr.serve(new JavassistMethodDispatcher(handler,
-	                MethodSelector.selectRpcServerMethod(handler.getClass())));
-	        svr.listen(port);
-	    } catch (Exception e) {
-	        svr.close();
-	        c.close();
-	        throw e;
-	    }
-	    return new Context(svr, c, port++);
-	}
-
 	static class ReflectionMethodDispatcher extends MethodDispatcher {
 	    public ReflectionMethodDispatcher(Object target, Method[] methods) {
 	        super(new Reflect(ReflectTest.messagePack),target, methods);
@@ -171,16 +155,6 @@ public abstract class ReflectTest extends TestCase {
                 methodMap.put(method.getName(), builder.buildInvoker(method));
             }
 	    }
-	}
-
-	static class JavassistMethodDispatcher extends MethodDispatcher {
-        public JavassistMethodDispatcher(Object target, Method[] methods) {
-            super(new Reflect(ReflectTest.messagePack),target, methods);
-            InvokerBuilder builder = new JavassistInvokerBuilder(ReflectTest.messagePack);
-            for(Method method : methods) {
-                methodMap.put(method.getName(), builder.buildInvoker(method));
-            }
-        }
 	}
 }
 

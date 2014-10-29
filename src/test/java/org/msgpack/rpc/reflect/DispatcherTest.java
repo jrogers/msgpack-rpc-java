@@ -79,56 +79,6 @@ public class DispatcherTest extends ReflectTest {
 		}
 	}
 
-	@Test
-    public void testSyncHandler2() throws Exception {
-        Context context = startServer2(new SyncHandler());
-        Client c = context.getClient();
-        try {
-            Value result;
-
-            result = c.callApply("m01", new Object[]{});
-            assertTrue(result.isRawValue());
-            assertEquals("m01", result.asRawValue().getString());
-
-            result = c.callApply("m02", new Object[]{"furuhashi"});
-            assertTrue(result.isRawValue());
-            assertEquals("m02"+"furuhashi", result.asRawValue().getString());
-
-            result = c.callApply("m03", new Object[]{1978});
-            assertTrue(result.isRawValue());
-            assertEquals("m03"+1978, result.asRawValue().getString());
-
-            List<String> list = new ArrayList<String>();
-            list.add("sadayuki");
-            list.add("kumofs");
-            result = c.callApply("m04", new Object[]{list});
-            assertTrue(result.isRawValue());
-            assertEquals("m04"+stringify1(list), result.asRawValue().getString());
-
-            List<List<String>> alist = new ArrayList<List<String>>();
-            List<String> alist_n1 = new ArrayList<String>();
-            alist_n1.add("1");
-            alist_n1.add("2");
-            alist_n1.add("3");
-            alist.add(alist_n1);
-            List<String> alist_n2 = new ArrayList<String>();
-            alist_n2.add("a");
-            alist_n2.add("b");
-            alist_n2.add("c");
-            alist.add(alist_n2);
-            result = c.callApply("m05", new Object[]{alist});
-            assertTrue(result.isRawValue());
-            assertEquals("m05"+stringify2(alist), result.asRawValue().getString());
-
-            result = c.callApply("m06", new Object[]{"viver", 2006});
-            assertTrue(result.isRawValue());
-            assertEquals("m06"+"viver"+2006, result.asRawValue().getString());
-
-        } finally {
-            context.close();
-        }
-    }
-
     @Test
 	public void testAsyncHandler() throws Exception {
 		Context context = startServer(new AsyncHandler());
@@ -178,55 +128,5 @@ public class DispatcherTest extends ReflectTest {
 			context.close();
 		}
 	}
-
-    @Test
-    public void testAsyncHandler2() throws Exception {
-        Context context = startServer2(new AsyncHandler());
-        Client c = context.getClient();
-        try {
-            Value result;
-
-            result = c.callApply("m01", new Object[]{});
-            assertTrue(result.isRawValue());
-            assertEquals("m01", result.asRawValue().getString());
-
-            result = c.callApply("m02", new Object[]{"furuhashi"});
-            assertTrue(result.isRawValue());
-            assertEquals("m02"+"furuhashi", result.asRawValue().getString());
-
-            result = c.callApply("m03", new Object[]{1978});
-            assertTrue(result.isRawValue());
-            assertEquals("m03"+1978, result.asRawValue().getString());
-
-            List<String> list = new ArrayList<String>();
-            list.add("sadayuki");
-            list.add("kumofs");
-            result = c.callApply("m04", new Object[]{list});
-            assertTrue(result.isRawValue());
-            assertEquals("m04"+stringify1(list), result.asRawValue().getString());
-
-            List<List<String>> alist = new ArrayList<List<String>>();
-            List<String> alist_n1 = new ArrayList<String>();
-            alist_n1.add("1");
-            alist_n1.add("2");
-            alist_n1.add("3");
-            alist.add(alist_n1);
-            List<String> alist_n2 = new ArrayList<String>();
-            alist_n2.add("a");
-            alist_n2.add("b");
-            alist_n2.add("c");
-            alist.add(alist_n2);
-            result = c.callApply("m05", new Object[]{alist});
-            assertTrue(result.isRawValue());
-            assertEquals("m05"+stringify2(alist), result.asRawValue().getString());
-
-            result = c.callApply("m06", new Object[]{"viver", 2006});
-            assertTrue(result.isRawValue());
-            assertEquals("m06"+"viver"+2006, result.asRawValue().getString());
-
-        } finally {
-            context.close();
-        }
-    }
 }
 
