@@ -4,6 +4,9 @@ repositories {
     mavenCentral()
 }
 
+sourceCompatibility = JavaVersion.VERSION_1_7
+targetCompatibility = JavaVersion.VERSION_1_7
+
 dependencies {
     compile 'org.msgpack:msgpack:0.6.11'
     compile('io.netty:netty-all:4.0.14.Final') {
