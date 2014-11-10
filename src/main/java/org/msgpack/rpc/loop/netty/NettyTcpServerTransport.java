@@ -22,11 +22,15 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import org.msgpack.rpc.address.Address;
+import org.msgpack.rpc.address.IPAddress;
 import org.msgpack.rpc.Server;
 import org.msgpack.rpc.config.TcpServerConfig;
 import org.msgpack.rpc.transport.RpcMessageHandler;
 import org.msgpack.rpc.transport.ServerTransport;
 import org.msgpack.rpc.address.Address;
+
+import java.net.InetSocketAddress;
 
 class NettyTcpServerTransport implements ServerTransport {
 
@@ -66,6 +70,10 @@ class NettyTcpServerTransport implements ServerTransport {
 
         // Bind and start to accept incoming connections.
         channelFuture = b.bind(address.getSocketAddress()).sync(); // (7)
+    }
+
+    public Address getLocalAddress() {
+        return new IPAddress((InetSocketAddress) channelFuture.channel().localAddress());
     }
 
     public void close() {

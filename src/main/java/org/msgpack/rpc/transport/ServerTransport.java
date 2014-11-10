@@ -18,8 +18,11 @@
 package org.msgpack.rpc.transport;
 
 import java.io.Closeable;
+import org.msgpack.rpc.address.Address;
 
 public interface ServerTransport extends Closeable {
+
+    public Address getLocalAddress();
 
     public void close();
 

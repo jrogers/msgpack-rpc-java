@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
+import org.msgpack.rpc.address.Address;
 import org.msgpack.rpc.builder.DefaultDispatcherBuilder;
 import org.msgpack.rpc.builder.DispatcherBuilder;
 import org.msgpack.rpc.reflect.Reflect;
@@ -61,6 +62,14 @@ public class Server extends SessionPool {
 
     public Server(ClientConfig config, EventLoop loop) {
         super(config, loop);
+    }
+
+    public Address getLocalAddress() {
+        if (stran == null) {
+            return null;
+        }
+
+        return stran.getLocalAddress();
     }
 
     public DispatcherBuilder getDispatcherBuilder() {
