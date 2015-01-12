@@ -23,7 +23,6 @@ import org.msgpack.rpc.builder.StopWatchDispatcherBuilder;
 import org.msgpack.rpc.dispatcher.*;
 import org.msgpack.rpc.config.*;
 import org.msgpack.rpc.loop.*;
-import org.msgpack.rpc.loop.netty.*;
 import java.util.*;
 import junit.framework.*;
 import org.junit.Test;
