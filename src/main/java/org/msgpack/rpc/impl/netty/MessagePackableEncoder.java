@@ -1,4 +1,4 @@
-package org.msgpack.rpc.loop.netty;
+package org.msgpack.rpc.impl.netty;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufOutputStream;

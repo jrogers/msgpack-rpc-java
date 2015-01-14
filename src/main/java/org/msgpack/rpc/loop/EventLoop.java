@@ -32,7 +32,7 @@ import org.msgpack.rpc.config.ClientConfig;
 import org.msgpack.rpc.config.ServerConfig;
 import org.msgpack.rpc.config.TcpClientConfig;
 import org.msgpack.rpc.config.TcpServerConfig;
-import org.msgpack.rpc.loop.netty.NettyEventLoopFactory;
+import org.msgpack.rpc.impl.netty.NettyEventLoopFactory;
 
 public abstract class EventLoop {
     static private EventLoopFactory loopFactory;

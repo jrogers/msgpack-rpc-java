@@ -1,4 +1,4 @@
-package org.msgpack.rpc.loop.netty;
+package org.msgpack.rpc.impl.netty;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;

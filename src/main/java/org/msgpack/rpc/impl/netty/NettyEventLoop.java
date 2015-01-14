@@ -15,23 +15,40 @@
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
 //
-package org.msgpack.rpc.loop.netty;
+package org.msgpack.rpc.impl.netty;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
-
 import org.msgpack.MessagePack;
+import org.msgpack.rpc.Session;
+import org.msgpack.rpc.Server;
 import org.msgpack.rpc.loop.EventLoop;
-import org.msgpack.rpc.loop.EventLoopFactory;
+import org.msgpack.rpc.transport.ServerTransport;
+import org.msgpack.rpc.transport.ClientTransport;
+import org.msgpack.rpc.config.TcpServerConfig;
+import org.msgpack.rpc.config.TcpClientConfig;
 
-public class NettyEventLoopFactory implements EventLoopFactory {
-    public NettyEventLoopFactory() {
-    }
-
-    public EventLoop make(ExecutorService workerExecutor,
+public class NettyEventLoop extends EventLoop {
+    public NettyEventLoop(ExecutorService workerExecutor,
             ExecutorService ioExecutor,
             ScheduledExecutorService scheduledExecutor, MessagePack messagePack) {
-        return new NettyEventLoop(workerExecutor, ioExecutor,
-                scheduledExecutor, messagePack);
+        super(workerExecutor, ioExecutor, scheduledExecutor, messagePack);
+    }
+
+    protected ClientTransport openTcpTransport(TcpClientConfig config,
+            Session session) {
+        return new NettyTcpClientTransport(config, session, this);
+    }
+
+    protected ServerTransport listenTcpTransport(TcpServerConfig config,
+            Server server) {
+
+        try{
+            return new NettyTcpServerTransport(config, server, this);
+        }
+        catch(Exception ex){
+            ex.printStackTrace();
+            return null;
+        }
     }
 }
