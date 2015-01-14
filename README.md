@@ -16,11 +16,10 @@ Currently, these features are supported:
 ## Dependencies
 
 MessagePack-RPC for Java requires the following packages:
-If you use Maven2 repository, these packages will be automatically downloaded.
 
   - MessagePack for Java - https://github.com/msgpack/msgpack-java
   - Netty - http://netty.io/
-  - A logging framework (slf4j and log4j used by default) - http://slf4j.org/
+  - A SLF4J-compatible logging framework (log4j used by default) - http://slf4j.org/
 
 The gradle build will automatically download and include the maven dependencies.
 
