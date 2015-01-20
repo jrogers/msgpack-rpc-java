@@ -9,10 +9,10 @@ targetCompatibility = JavaVersion.VERSION_1_7
 
 dependencies {
     compile 'org.msgpack:msgpack:0.6.11'
-    compile('io.netty:netty-all:4.0.14.Final') {
+    compile('io.netty:netty-all:4.0.25.Final') {
         exclude(module: 'commons-logging')
     }
-    compile 'org.slf4j:slf4j-api:1.7.7'
-    compile 'org.slf4j:slf4j-log4j12:1.7.7'
-    testCompile 'junit:junit:4.11'
+    compile 'org.slf4j:slf4j-api:1.7.10'
+    compile 'org.slf4j:slf4j-log4j12:1.7.10'
+    testCompile 'junit:junit:4.12'
 }
