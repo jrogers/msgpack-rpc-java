@@ -17,25 +17,22 @@
 //
 package org.msgpack.rpc;
 
-import org.msgpack.*;
-import org.msgpack.rpc.*;
-import org.msgpack.rpc.dispatcher.*;
-import org.msgpack.rpc.config.*;
 import org.msgpack.rpc.loop.*;
-import java.util.*;
 import java.util.concurrent.TimeUnit;
-import junit.framework.*;
 import org.junit.Test;
 
-public class FutureTest extends TestCase {
-    public static class TestHandler {
-        public TestHandler() {
-        }
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
+public class FutureTest {
+    public static class TestHandler {
+
+        @SuppressWarnings("unused")
         public String m1(String a1) {
             return "ok" + a1;
         }
 
+        @SuppressWarnings("unused")
         public String m2(Integer time_millis) throws InterruptedException {
             Thread.sleep(time_millis);
             return "ok" + time_millis;
@@ -43,15 +40,15 @@ public class FutureTest extends TestCase {
     }
 
     public interface TestInterface {
-        public Future<String> m1(String a1);
+        Future<String> m1(String a1);
 
-        public Future<String> m1Async(String a1); // /Async$/ will be removed
+        Future<String> m1Async(String a1); // /Async$/ will be removed
 
-        public Future<String> m2(Integer time_millis);
+        Future<String> m2(Integer time_millis);
     }
 
     @Test
-    public void testFuture() throws Exception {
+    public void future() throws Exception {
         EventLoop loop = EventLoop.start();
 
         Server svr = new Server(loop);
@@ -74,12 +71,12 @@ public class FutureTest extends TestCase {
             f4.join(500, TimeUnit.MILLISECONDS);
             f5.join(500, TimeUnit.MILLISECONDS);
 
-            assertEquals(f1.get(), "ok" + "a1");
-            assertEquals(f2.get(), "ok" + "a2");
-            assertEquals(f3.get(), "ok" + "a3");
-            assertEquals(f4.get(), "ok" + "5");
-            assertTrue(f4.getError().isNilValue());
-            assertEquals(f5.getError().asRawValue().getString(), "timedout");
+            assertEquals("ok" + "a1", f1.get());
+            assertEquals("ok" + "a2", f2.get());
+            assertEquals("ok" + "a3", f3.get());
+            assertEquals("ok" + "5", f4.get());
+            assertTrue(f4.getError().isNull());
+            assertEquals("timedout", f5.getError().get(0).asText());
 
         } finally {
             svr.close();

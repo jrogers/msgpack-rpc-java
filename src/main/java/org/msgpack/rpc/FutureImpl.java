@@ -19,19 +19,20 @@ package org.msgpack.rpc;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.msgpack.type.Value;
-import org.msgpack.type.ValueFactory;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 
 class FutureImpl {
-    private Session session;
+    private final Session session;
     private Runnable callback = null;
 
-    private Object lock = new Object();
+    private final Object lock = new Object();
     private int timeout;
     private volatile boolean done = false;
 
-    private Value result;
-    private Value error;
+    private JsonNode result;
+    private JsonNode error;
 
     FutureImpl(Session session) {
         this.session = session;
@@ -53,7 +54,7 @@ class FutureImpl {
 
     void join() throws InterruptedException {
         synchronized (lock) {
-            while (done == false) {
+            while (!done) {
                 lock.wait();
             }
         }
@@ -63,13 +64,16 @@ class FutureImpl {
         long end_time = System.currentTimeMillis() + unit.toMillis(timeout);
         boolean run_callback = false;
         synchronized (lock) {
-            while (done == false) {
+            while (!done) {
                 long timeout_remaining = end_time - System.currentTimeMillis();
                 if (timeout_remaining <= 0) break;
                 lock.wait(timeout_remaining);
             }
+
             if (!done) {
-                this.error = ValueFactory.createRawValue("timedout");
+                ArrayNode error = session.getEventLoop().getObjectMapper().createArrayNode();
+                error.add("timedout");
+                this.error = error;
                 done = true;
                 lock.notifyAll();
                 run_callback = true;
@@ -86,19 +90,20 @@ class FutureImpl {
         return done;
     }
 
-    public Value getResult() {
+    public JsonNode getResult() {
         return result;
     }
 
-    public Value getError() {
+    public JsonNode getError() {
         return error;
     }
 
-    public void setResult(Value result, Value error) {
+    public void setResult(JsonNode result, JsonNode error) {
         synchronized (lock) {
             if (done) {
                 return;
             }
+
             this.result = result;
             this.error = error;
             this.done = true;

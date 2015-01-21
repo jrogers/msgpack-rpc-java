@@ -17,40 +17,35 @@
 //
 package org.msgpack.rpc;
 
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.msgpack.MessagePack;
-import org.msgpack.type.Value;
-import org.msgpack.template.Template;
-import org.msgpack.rpc.error.*;
-import org.msgpack.unpacker.Converter;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.msgpack.rpc.error.RemoteError;
 
 public class Future<V> implements java.util.concurrent.Future<V> {
+
+    private ObjectMapper mapper;
     private FutureImpl impl;
-    private Template resultTemplate;
-    private MessagePack messagePack;
+    private JavaType resultType;
 
-    Future(MessagePack messagePack, FutureImpl impl) {
-        this(messagePack, impl, null);
-    }
-
-    Future(MessagePack messagePack, FutureImpl impl, Template resultTemplate) {
+    Future(ObjectMapper mapper, FutureImpl impl) {
+        this.mapper = mapper;
         this.impl = impl;
-        this.resultTemplate = resultTemplate;
-        this.messagePack = messagePack;
     }
 
-    public Future(MessagePack messagePack, Future<Value> future, Class<V> resultClass) {
-        this(messagePack, future.impl, null);
-        if (resultClass != void.class) {
-            this.resultTemplate = messagePack.lookup(resultClass);
-        }
+    Future(ObjectMapper mapper, FutureImpl impl, JavaType resultType) {
+        this.mapper = mapper;
+        this.impl = impl;
+        this.resultType = resultType;
     }
 
-    public Future(MessagePack messagePack, Future<Value> future, Template resultTemplate) {
-        this(messagePack, future.impl, resultTemplate);
+    public Future(ObjectMapper mapper, Future<JsonNode> future, JavaType resultType) {
+        this(mapper, future.impl);
+        this.resultType = resultType;
     }
 
     public void attachCallback(Runnable callback) {
@@ -95,29 +90,26 @@ public class Future<V> implements java.util.concurrent.Future<V> {
 
     @SuppressWarnings("unchecked")
     public V getResult() {
-        Value result = impl.getResult();
-        if (resultTemplate == null) {
+        JsonNode result = impl.getResult();
+        if (resultType == null) {
             return (V) result;
-        } else if (result.isNilValue()) {
+        } else if (result.isNull()) {
             return null;
         } else {
             try {
-                return (V) resultTemplate.read(
-                        new Converter(messagePack, result), null);
-                // return (V)messagePack.c(result,);
-                // result.convert(resultTemplate);
-            } catch (IOException e) {
+                return mapper.convertValue(result, resultType);
+            } catch (IllegalArgumentException e) {
                 return null;
             }
         }
     }
 
-    public Value getError() {
+    public JsonNode getError() {
         return impl.getError();
     }
 
     private void checkThrowError() {
-        if (!getError().isNilValue()) {
+        if (!getError().isNull()) {
             // FIXME exception
             throw new RemoteError(getError());
         }

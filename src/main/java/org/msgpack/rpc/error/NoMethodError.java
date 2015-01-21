@@ -17,38 +17,12 @@
 //
 package org.msgpack.rpc.error;
 
-import org.msgpack.packer.Packer;
-import org.msgpack.unpacker.Unpacker;
-
-import java.io.IOException;
+import com.fasterxml.jackson.databind.JsonNode;
 
 public class NoMethodError extends RemoteError {
-    private static final long serialVersionUID = 1L;
 
-    public NoMethodError() {
-        super();
-    }
-
-    public NoMethodError(String message) {
-        super(message);
-    }
-
-    public void writeTo(Packer pk) throws IOException {
-        pk.writeArrayBegin(1);
-        pk.write(getMessage());
-        pk.writeArrayEnd();
-
-    }
-
-    public void readFrom(Unpacker u) throws IOException {
-        throw new UnsupportedOperationException();
-    }
-
-    public void messagePack(Packer pk) throws IOException {
-        writeTo(pk);
-        /*
-         * pk.packArray(1); pk.pack(getMessage());
-         */
+    public NoMethodError(JsonNode data) {
+        super(data);
     }
 
     public static final String CODE = "RemoteError.NoMethodError";

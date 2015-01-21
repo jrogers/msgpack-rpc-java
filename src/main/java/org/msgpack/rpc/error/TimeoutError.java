@@ -18,7 +18,6 @@
 package org.msgpack.rpc.error;
 
 public class TimeoutError extends RPCError {
-    private static final long serialVersionUID = 1L;
 
     public TimeoutError(String message) {
         super(message);

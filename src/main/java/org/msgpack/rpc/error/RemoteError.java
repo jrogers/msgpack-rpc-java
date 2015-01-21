@@ -17,62 +17,27 @@
 //
 package org.msgpack.rpc.error;
 
-import org.msgpack.*;
-import org.msgpack.packer.Packer;
-import org.msgpack.type.Value;
-import org.msgpack.type.ValueFactory;
-import org.msgpack.unpacker.Unpacker;
+import com.fasterxml.jackson.databind.JsonNode;
 
-import java.io.IOException;
+public class RemoteError extends RPCError {
 
-public class RemoteError extends RPCError implements MessagePackable {
-    private static final long serialVersionUID = 1L;
+    private JsonNode data;
 
-    private Value data;
-
-    public RemoteError() {
-        super();
-        this.data = ValueFactory.createArrayValue(
-                new Value[] { ValueFactory.createRawValue("unknown error") });
-    }
-
-    public RemoteError(String message) {
-        super(message);
-        this.data = ValueFactory.createArrayValue(
-                new Value[] { ValueFactory.createRawValue(message) });
-    }
-
-    public RemoteError(Value data) {
+    public RemoteError(JsonNode data) {
         super(loadMessage(data));
         this.data = data;
     }
 
-    public Value getData() {
+    public JsonNode getData() {
         return data;
     }
 
-    public void messagePack(Packer pk) throws IOException {
-        pk.write(data);
-    }
-
-    private static String loadMessage(Value data) {
-        try {
-            if (data.isRawValue()) {
-                return data.asRawValue().getString();
-            } else {
-                return data.asArrayValue().getElementArray()[0].asRawValue().getString();
-            }
-        } catch (MessageTypeException e) {
-            return "unknown error: " + data;
+    private static String loadMessage(JsonNode data) {
+        if (data.isTextual()) {
+            return data.asText();
+        } else {
+            return data.get(0).asText();
         }
-    }
-
-    public void writeTo(Packer pk) throws IOException {
-        pk.write(data);
-    }
-
-    public void readFrom(Unpacker u) throws IOException {
-        data = u.readValue();
     }
 
     public static final String CODE = "RemoteError";

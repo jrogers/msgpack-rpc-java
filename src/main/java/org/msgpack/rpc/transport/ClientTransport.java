@@ -17,11 +17,13 @@
 //
 package org.msgpack.rpc.transport;
 
+import org.msgpack.rpc.message.Message;
+
 import java.io.Closeable;
 
 public interface ClientTransport extends Closeable, MessageSendable {
 
-    public void sendMessage(Object obj);
+    void sendMessage(Message message);
 
-    public void close();
+    void close();
 }

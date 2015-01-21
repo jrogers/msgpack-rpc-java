@@ -17,21 +17,14 @@
 //
 package org.msgpack.rpc;
 
-import org.msgpack.*;
-import org.msgpack.rpc.*;
-import org.msgpack.rpc.builder.StopWatchDispatcherBuilder;
 import org.msgpack.rpc.dispatcher.*;
-import org.msgpack.rpc.config.*;
 import org.msgpack.rpc.loop.*;
-import java.util.*;
-import junit.framework.*;
 import org.junit.Test;
-import org.msgpack.template.Template;
-import org.msgpack.type.Value;
-import org.msgpack.type.ValueFactory;
 
-public class ServerTest extends TestCase {
-	private static Value MESSAGE = ValueFactory.createRawValue("ok");
+import static org.junit.Assert.assertEquals;
+
+public class ServerTest {
+	private static final String MESSAGE = "ok";
 	public static class TestDispatcher implements Dispatcher {
 		public void dispatch(Request request) {
 			request.sendResult(MESSAGE);
@@ -39,13 +32,11 @@ public class ServerTest extends TestCase {
 	}
 
 	@Test
-	public void testSyncLoad() throws Exception {
-        MessagePack messagePack = new MessagePack();
-		EventLoop loop = EventLoop.start(messagePack);
+	public void syncLoad() throws Exception {
+		EventLoop loop = EventLoop.start();
 		Server svr = new Server(loop);
 		Client c = new Client("127.0.0.1", 19850, loop);
 		c.setRequestTimeout(10);
-
 
 		try {
 			svr.serve(new TestDispatcher());
@@ -54,10 +45,11 @@ public class ServerTest extends TestCase {
 			int num = 1000;
 
 			long start = System.currentTimeMillis();
-			for(int i=0; i < num; i++) {
-				Value result = c.callApply("test", new Object[]{});
+			for (int i = 0; i < num; i++) {
+				String result = c.callApply("test", String.class);
 				assertEquals(MESSAGE, result);
 			}
+
 			long finish = System.currentTimeMillis();
 
 			double result = num / ((double)(finish - start) / 1000);
@@ -71,7 +63,7 @@ public class ServerTest extends TestCase {
 	}
 
 	@Test
-	public void testAsyncLoad() throws Exception {
+	public void asyncLoad() throws Exception {
 		EventLoop loop = EventLoop.start();
 		Server svr = new Server(loop);
 		Client c = new Client("127.0.0.1", 19850, loop);
@@ -84,22 +76,20 @@ public class ServerTest extends TestCase {
 			int num = 1000;
 
 			long start = System.currentTimeMillis();
-			for(int i=0; i < num-1; i++) {
-				c.notifyApply("test", new Object[]{});
+			for (int i = 0; i < num - 1; i++) {
+				c.notifyApply("test");
 			}
-			c.callApply("test", new Object[]{});
+
+			c.callApply("test");
 			long finish = System.currentTimeMillis();
 
 			double result = num / ((double)(finish - start) / 1000);
 			System.out.println("async: "+result+" calls per sec");
-
 		} finally {
 			svr.close();
 			c.close();
 			loop.shutdown();
 		}
 	}
-
-
 }
 

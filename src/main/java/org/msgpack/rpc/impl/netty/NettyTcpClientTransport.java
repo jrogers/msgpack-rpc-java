@@ -25,6 +25,8 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+
+import org.msgpack.rpc.message.Message;
 import org.msgpack.rpc.Session;
 import org.msgpack.rpc.config.TcpClientConfig;
 import org.msgpack.rpc.transport.ClientTransport;
@@ -54,10 +56,9 @@ class NettyTcpClientTransport implements ClientTransport {
                 @Override
                 public void initChannel(SocketChannel ch) throws Exception {
                     ch.pipeline().addLast(
-                            new MessagePackDecoder(loop.getMessagePack()),
+                            new MessagePackDecoder(loop.getObjectMapper()),
                             new MessageHandler(handler),
-                            new MessagePackEncoder(loop.getMessagePack()),
-                            new MessagePackableEncoder(loop.getMessagePack()));
+                            new MessagePackEncoder(loop.getObjectMapper()));
                 }
             });
 
@@ -70,7 +71,7 @@ class NettyTcpClientTransport implements ClientTransport {
         return _bootstrap.connect(_session.getAddress().getSocketAddress());
     }
 
-    public void sendMessage(final Object msg) {
+    public void sendMessage(final Message msg) {
 
         if(_writables.isEmpty() && _availables.getAndDecrement() > 0){
 

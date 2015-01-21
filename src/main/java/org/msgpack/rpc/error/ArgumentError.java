@@ -17,25 +17,12 @@
 //
 package org.msgpack.rpc.error;
 
-import org.msgpack.packer.Packer;
-
-import java.io.IOException;
+import com.fasterxml.jackson.databind.JsonNode;
 
 public class ArgumentError extends RemoteError {
-    private static final long serialVersionUID = 1L;
 
-    public ArgumentError() {
-        super();
-    }
-
-    public ArgumentError(String message) {
-        super(message);
-    }
-
-    public void messagePack(Packer pk) throws IOException {
-        pk.writeArrayBegin(1);
-        pk.write(getMessage());
-        pk.writeArrayEnd();
+    public ArgumentError(JsonNode data) {
+        super(data);
     }
 
     public static final String CODE = "RemoteError.ArgumentError";

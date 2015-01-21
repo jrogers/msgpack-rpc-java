@@ -17,7 +17,9 @@
 //
 package org.msgpack.rpc.reflect;
 
-import org.msgpack.MessagePack;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.msgpack.jackson.dataformat.MessagePackFactory;
 import org.msgpack.rpc.*;
 import org.msgpack.rpc.dispatcher.*;
 import org.msgpack.rpc.loop.*;
@@ -25,55 +27,56 @@ import org.msgpack.rpc.loop.*;
 import java.lang.reflect.Method;
 import java.util.*;
 
-import junit.framework.*;
+public abstract class ReflectTest {
 
-public abstract class ReflectTest extends TestCase {
-
-    static MessagePack messagePack = new MessagePack();
+    static ObjectMapper mapper = new ObjectMapper(new MessagePackFactory());
 
 	static String stringify1(Iterable<String> a) {
 		StringBuilder sb = new StringBuilder();
-		for(String s : a) {
+		for (String s : a) {
 			sb.append(s);
 		}
+
 		return sb.toString();
 	}
 
 	static String stringify2(Iterable<? extends Iterable<String>> a) {
 		StringBuilder sb = new StringBuilder();
-		for(Iterable<String> i : a) {
-			for(String s : i) {
+		for (Iterable<String> i : a) {
+			for (String s : i) {
 				sb.append(s);
 			}
 		}
+
 		return sb.toString();
 	}
 
 
-	public static interface TestRpc {
-		public String m01();
-		public String m02(String a1);
-		public String m03(int a1);
-		public String m04(List<String> a1);
-		public String m05(List<List<String>> a1);
-		public String m06(String a1, int a2);
+	public interface TestRpc {
+		String m01();
+		String m02(String a1);
+		String m03(int a1);
+		String m04(List<String> a1);
+		String m05(List<List<String>> a1);
+		String m06(String a1, int a2);
 	}
 
 	public static class SyncHandler implements TestRpc {
+
 		public String m01() {
 			return "m01";
 		}
 
 		public String m02(String a1) {
-			return "m02"+a1;
+			return "m02" + a1;
 		}
 
 		public String m03(int a1) {
-			return "m03"+a1;
+			return "m03" + a1;
 		}
 
 		public String m04(List<String> a1) {
-			return "m04"+stringify1(a1);
+			return "m04" + stringify1(a1);
 		}
 
 		public String m05(List<List<String>> a1) {
@@ -86,43 +89,62 @@ public abstract class ReflectTest extends TestCase {
 	}
 
 	public static class AsyncHandler {
+
+		@SuppressWarnings("unused")
         public void m01(Callback<String> callback) {
             callback.sendResult("m01");
         }
 
+		@SuppressWarnings("unused")
         public void m02(Callback<String> callback, String a1) {
-            callback.sendResult("m02"+a1);
+            callback.sendResult("m02" + a1);
         }
 
+		@SuppressWarnings("unused")
         public void m03(Callback<String> callback, int a1) {
-            callback.sendResult("m03"+a1);
+            callback.sendResult("m03" + a1);
         }
 
+		@SuppressWarnings("unused")
         public void m04(Callback<String> callback, List<String> a1) {
-            callback.sendResult("m04"+stringify1(a1));
+            callback.sendResult("m04" + stringify1(a1));
         }
 
+		@SuppressWarnings("unused")
         public void m05(Callback<String> callback, List<List<String>> a1) {
-            callback.sendResult("m05"+stringify2(a1));
+            callback.sendResult("m05" + stringify2(a1));
         }
 
+		@SuppressWarnings("unused")
         public void m06(Callback<String> callback, String a1, int a2) {
-            callback.sendResult("m06"+a1+a2);
+            callback.sendResult("m06" + a1 + a2);
         }
     }
 
 	static class Context {
+
 		Server server;
 		Client client;
 		int port;
+
 		Context(Server server, Client client, int port) {
 			this.server = server;
 			this.client = client;
 			this.port = port;
 		}
-		Server getServer() { return server; }
-		Client getClient() { return client; }
-		int getPort() { return port; }
+
+		Server getServer() {
+			return server;
+		}
+
+		Client getClient() {
+			return client;
+		}
+
+		int getPort() {
+			return port;
+		}
+
 		void close() {
 			server.close();
 			client.close();
@@ -144,14 +166,15 @@ public abstract class ReflectTest extends TestCase {
 			c.close();
 			throw e;
 		}
+
 		return new Context(svr, c, port++);
 	}
 
 	static class ReflectionMethodDispatcher extends MethodDispatcher {
 	    public ReflectionMethodDispatcher(Object target, Method[] methods) {
-	        super(new Reflect(ReflectTest.messagePack),target, methods);
-	        InvokerBuilder builder = new ReflectionInvokerBuilder(ReflectTest.messagePack);//ReflectionInvokerBuilder.getInstance();
-            for(Method method : methods) {
+	        super(new Reflect(mapper),target, methods);
+	        InvokerBuilder builder = new ReflectionInvokerBuilder(mapper);
+            for (Method method : methods) {
                 methodMap.put(method.getName(), builder.buildInvoker(method));
             }
 	    }

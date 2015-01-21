@@ -17,22 +17,15 @@
 //
 package org.msgpack.rpc.reflect;
 
-import org.msgpack.*;
-import org.msgpack.rpc.*;
-import org.msgpack.rpc.dispatcher.*;
-import org.msgpack.rpc.config.*;
-import org.msgpack.rpc.loop.*;
 import java.util.*;
 
-import junit.framework.*;
-
-import org.junit.BeforeClass;
 import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
 public class ProxyTest extends ReflectTest {
 
     @Test
-    public void testSyncClient() throws Exception {
+    public void syncClient() throws Exception {
         Context context = startServer(new SyncHandler());
         TestRpc c = context.getClient().proxy(TestRpc.class);
         try {
@@ -45,19 +38,19 @@ public class ProxyTest extends ReflectTest {
             String r03 = c.m03(1978);
             assertEquals("m03" + 1978, r03);
 
-            List<String> list = new ArrayList<String>();
+            List<String> list = new ArrayList<>();
             list.add("sadayuki");
             list.add("kumofs");
             String r04 = c.m04(list);
             assertEquals("m04" + stringify1(list), r04);
 
-            List<List<String>> alist = new ArrayList<List<String>>();
-            List<String> alist_n1 = new ArrayList<String>();
+            List<List<String>> alist = new ArrayList<>();
+            List<String> alist_n1 = new ArrayList<>();
             alist_n1.add("1");
             alist_n1.add("2");
             alist_n1.add("3");
             alist.add(alist_n1);
-            List<String> alist_n2 = new ArrayList<String>();
+            List<String> alist_n2 = new ArrayList<>();
             alist_n2.add("a");
             alist_n2.add("b");
             alist_n2.add("c");
@@ -75,13 +68,13 @@ public class ProxyTest extends ReflectTest {
 
     public interface NullOrException{
 
-    	public String returnNullValue();
+    	String returnNullValue();
 
-    	public String throwsException() throws Exception;
+    	String throwsException() throws Exception;
 
     }
 
-    public class NullOrExceptionSyncHandler implements NullOrException{
+    public class NullOrExceptionSyncHandler implements NullOrException {
 
     	public String returnNullValue(){
     		return null;
@@ -90,7 +83,5 @@ public class ProxyTest extends ReflectTest {
     	public String throwsException() throws Exception{
     		throw new Exception("Error");
     	}
-
-
     }
 }

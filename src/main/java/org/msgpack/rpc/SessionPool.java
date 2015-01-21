@@ -31,9 +31,9 @@ import org.msgpack.rpc.config.ClientConfig;
 import org.msgpack.rpc.config.TcpClientConfig;
 
 public class SessionPool implements Closeable {
-    private ClientConfig config;
-    private EventLoop loop;
-    private Map<Address, Session> pool = new HashMap<Address, Session>();
+    private final ClientConfig config;
+    private final EventLoop loop;
+    private final Map<Address, Session> pool = new HashMap<Address, Session>();
     private ScheduledFuture<?> timer;
 
     public SessionPool() {

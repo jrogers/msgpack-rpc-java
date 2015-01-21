@@ -17,7 +17,9 @@
 //
 package org.msgpack.rpc.transport;
 
-import org.msgpack.type.Value;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+
 import org.msgpack.rpc.message.Messages;
 import org.msgpack.rpc.Session;
 import org.msgpack.rpc.Server;
@@ -56,9 +58,9 @@ public class RpcMessageHandler {
     static class HandleMessageTask implements Runnable {
         private RpcMessageHandler handler;
         private MessageSendable channel;
-        private Value msg;
+        private ArrayNode msg;
 
-        HandleMessageTask(RpcMessageHandler handler, MessageSendable channel, Value msg) {
+        HandleMessageTask(RpcMessageHandler handler, MessageSendable channel, ArrayNode msg) {
             this.handler = handler;
             this.channel = channel;
             this.msg = msg;
@@ -69,7 +71,7 @@ public class RpcMessageHandler {
         }
     }
 
-    public void handleMessage(MessageSendable channel, Value msg) {
+    public void handleMessage(MessageSendable channel, ArrayNode msg) {
         if (useThread) {
             loop.getWorkerExecutor().submit(
                     new HandleMessageTask(this, channel, msg));
@@ -78,32 +80,30 @@ public class RpcMessageHandler {
         }
     }
 
-    private void handleMessageImpl(MessageSendable channel, Value msg) {
-
-        Value[] array = msg.asArrayValue().getElementArray();
+    private void handleMessageImpl(MessageSendable channel, ArrayNode msg) {
 
         // TODO check array.length
-        int type = array[0].asIntegerValue().getInt();
+        int type = msg.get(0).asInt();
         if (type == Messages.REQUEST) {
             // REQUEST
-            int msgid = array[1].asIntegerValue().getInt();
-            String method = array[2].asRawValue().getString();
-            Value args = array[3];
-            handleRequest(channel, msgid, method, args);
+            int msgId = msg.get(1).asInt();
+            String method = msg.get(2).asText();
+            ArrayNode args = (ArrayNode) msg.get(3);
+            handleRequest(channel, msgId, method, args);
 
         }
         else if (type == Messages.RESPONSE) {
             // RESPONSE
-            int msgid = array[1].asIntegerValue().getInt();
-            Value error = array[2];
-            Value result = array[3];
-            handleResponse(channel, msgid, result, error);
+            int msgId = msg.get(1).asInt();
+            JsonNode error = msg.get(2);
+            JsonNode result = msg.get(3);
+            handleResponse(channel, msgId, result, error);
 
         }
         else if (type == Messages.NOTIFY) {
             // NOTIFY
-            String method = array[1].asRawValue().getString();
-            Value args = array[2];
+            String method = msg.get(1).asText();
+            ArrayNode args = (ArrayNode) msg.get(2);
             handleNotify(channel, method, args);
 
         }
@@ -113,26 +113,26 @@ public class RpcMessageHandler {
         }
     }
 
-    private void handleRequest(MessageSendable channel, int msgid,
-            String method, Value args) {
+    private void handleRequest(MessageSendable channel, int msgId,
+            String method, ArrayNode args) {
         if (server == null) {
             return; // FIXME error result
         }
-        server.onRequest(channel, msgid, method, args);
+        server.onRequest(channel, msgId, method, args);
     }
 
-    private void handleNotify(MessageSendable channel, String method, Value args) {
+    private void handleNotify(MessageSendable channel, String method, ArrayNode args) {
         if (server == null) {
             return; // FIXME error result?
         }
         server.onNotify(method, args);
     }
 
-    private void handleResponse(MessageSendable channel, int msgid,
-            Value result, Value error) {
+    private void handleResponse(MessageSendable channel, int msgId,
+            JsonNode result, JsonNode error) {
         if (session == null) {
             return; // FIXME error?
         }
-        session.onResponse(msgid, result, error);
+        session.onResponse(msgId, result, error);
     }
 }

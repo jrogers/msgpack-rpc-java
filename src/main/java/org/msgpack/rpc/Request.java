@@ -17,28 +17,28 @@
 //
 package org.msgpack.rpc;
 
-import org.msgpack.type.Value;
 import org.msgpack.rpc.message.ResponseMessage;
 import org.msgpack.rpc.transport.MessageSendable;
+
+import com.fasterxml.jackson.databind.node.ArrayNode;
 
 public class Request implements Callback<Object> {
 
     private MessageSendable channel; // TODO #SF synchronized?
-
-    private int msgid;
+    private int msgId;
     private String method;
-    private Value args;
+    private ArrayNode args;
 
-    public Request(MessageSendable channel, int msgid, String method, Value args) {
+    public Request(MessageSendable channel, int msgId, String method, ArrayNode args) {
         this.channel = channel;
-        this.msgid = msgid;
+        this.msgId = msgId;
         this.method = method;
         this.args = args;
     }
 
-    public Request(String method, Value args) {
+    public Request(String method, ArrayNode args) {
         this.channel = null;
-        this.msgid = 0;
+        this.msgId = 0;
         this.method = method;
         this.args = args;
     }
@@ -47,12 +47,12 @@ public class Request implements Callback<Object> {
         return method;
     }
 
-    public Value getArguments() {
+    public ArrayNode getArguments() {
         return args;
     }
 
     public int getMessageID() {
-        return msgid;
+        return msgId;
     }
 
     public void sendResult(Object result) {
@@ -68,12 +68,11 @@ public class Request implements Callback<Object> {
     }
 
     public synchronized void sendResponse(Object result, Object error) {
-
         if (channel == null) {
             return;
         }
 
-        ResponseMessage msg = new ResponseMessage(msgid, error, result);
+        ResponseMessage msg = new ResponseMessage(msgId, error, result);
         channel.sendMessage(msg);
         channel = null;
     }

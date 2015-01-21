@@ -17,286 +17,306 @@
 //
 package org.msgpack.rpc.reflect;
 
-import java.io.IOException;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+
 import java.lang.reflect.*;
-import org.msgpack.*;
-import org.msgpack.template.*;
+
 import org.msgpack.rpc.*;
-import org.msgpack.type.Value;
-import org.msgpack.unpacker.Converter;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ReflectionInvokerBuilder extends InvokerBuilder {
 
     private static final Logger logger = LoggerFactory.getLogger(ReflectionInvokerBuilder.class);
-    protected  MessagePack messagePack;
-    public ReflectionInvokerBuilder(MessagePack messagePack){
-        this.messagePack = messagePack;
+    protected ObjectMapper mapper;
+
+    public ReflectionInvokerBuilder(ObjectMapper mapper){
+        this.mapper = mapper;
     }
 
 
-	static abstract class ReflectionArgumentEntry extends ArgumentEntry {
-		ReflectionArgumentEntry(ArgumentEntry e) {
-			super(e);
-		}
+    static abstract class ReflectionArgumentEntry extends ArgumentEntry {
+        ReflectionArgumentEntry(ArgumentEntry e) {
+            super(e);
+        }
 
-		public abstract void convert(Object[] params, Value obj) throws MessageTypeException;
+        public abstract void convert(Object[] params, JsonNode obj) throws IllegalArgumentException;
 
-		public void setNull(Object[] params) {
-			params[getIndex()] = null;
-		}
-	}
+        public void setNull(Object[] params) {
+            params[getIndex()] = null;
+        }
+    }
 
-	static class NullArgumentEntry extends ReflectionArgumentEntry {
-		NullArgumentEntry(ArgumentEntry e) {
-			super(e);
-		}
-		public void convert(Object[] params, Value obj) throws MessageTypeException { }
-	}
-
-	static class BooleanArgumentEntry extends ReflectionArgumentEntry {
-		BooleanArgumentEntry(ArgumentEntry e) {
-			super(e);
-		}
-		public void convert(Object[] params, Value obj) throws MessageTypeException {
-			params[getIndex()] = obj.asBooleanValue().getBoolean();
-		}
-	}
-
-	static class ByteArgumentEntry extends ReflectionArgumentEntry {
-		ByteArgumentEntry(ArgumentEntry e) {
-			super(e);
-		}
-		public void convert(Object[] params, Value obj) throws MessageTypeException {
-			params[getIndex()] = obj.asIntegerValue().getByte();
-		}
-	}
-
-	static class ShortArgumentEntry extends ReflectionArgumentEntry {
-		ShortArgumentEntry(ArgumentEntry e) {
-			super(e);
-		}
-		public void convert(Object[] params, Value obj) throws MessageTypeException {
-			params[getIndex()] = obj.asIntegerValue().getShort();
-		}
-	}
-
-	static class IntArgumentEntry extends ReflectionArgumentEntry {
-		IntArgumentEntry(ArgumentEntry e) {
-			super(e);
-		}
-		public void convert(Object[] params, Value obj) throws MessageTypeException {
-			params[getIndex()] = obj.asIntegerValue().getInt();
-		}
-	}
-
-	static class LongArgumentEntry extends ReflectionArgumentEntry {
-		LongArgumentEntry(ArgumentEntry e) {
-			super(e);
-		}
-		public void convert(Object[] params, Value obj) throws MessageTypeException {
-			params[getIndex()] = obj.asIntegerValue().getLong();
-		}
-	}
-
-	static class FloatArgumentEntry extends ReflectionArgumentEntry {
-		FloatArgumentEntry(ArgumentEntry e) {
-			super(e);
-		}
-		public void convert(Object[] params, Value obj) throws MessageTypeException {
-			params[getIndex()] = obj.asFloatValue().getFloat();
-		}
-	}
-
-	static class DoubleArgumentEntry extends ReflectionArgumentEntry {
-		DoubleArgumentEntry(ArgumentEntry e) {
-			super(e);
-		}
-		public void convert(Object[] params, Value obj) throws MessageTypeException {
-			params[getIndex()] = obj.asFloatValue().getDouble();
-		}
-	}
-
-	static class ObjectArgumentEntry extends ReflectionArgumentEntry {
-		private Template template;
-
-        private MessagePack messagePack;
-
-		ObjectArgumentEntry(MessagePack messagePack,ArgumentEntry e, Template template) {
-			super(e);
-			this.template = template;
-            this.messagePack = messagePack;
-		}
-
-		@SuppressWarnings("unchecked")
-		public void convert(Object[] params, Value obj) throws MessageTypeException {
-            try {
-                params[getIndex()] = template.read(new Converter(messagePack,obj),null);//messagePack.convert(obj,template);
-            } catch (IOException e) {
-                new MessageTypeException(e);
+    static class NullArgumentEntry extends ReflectionArgumentEntry {
+        NullArgumentEntry(ArgumentEntry e) {
+            super(e);
+        }
+        public void convert(Object[] params, JsonNode obj) throws IllegalArgumentException {
+            if (obj.isNull()) {
+                setNull(params);
+            } else {
+                throw new IllegalArgumentException();
             }
         }
-	}
+    }
 
-	private static class ReflectionInvoker implements Invoker {
-		protected Method method;
-		protected int parameterLength;
-		protected ReflectionArgumentEntry[] entries;
-		protected int minimumArrayLength;
-		boolean async;
+    static class BooleanArgumentEntry extends ReflectionArgumentEntry {
+        BooleanArgumentEntry(ArgumentEntry e) {
+            super(e);
+        }
+        public void convert(Object[] params, JsonNode obj) throws IllegalArgumentException {
+            if (obj.isBoolean()) {
+                params[getIndex()] = obj.booleanValue();
+            } else {
+                throw new IllegalArgumentException();
+            }
+        }
+    }
 
-		public ReflectionInvoker(Method method, ReflectionArgumentEntry[] entries, boolean async) {
-			this.method = method;
-			this.parameterLength = method.getParameterTypes().length;
-			this.entries = entries;
-			this.async = async;
-			this.minimumArrayLength = 0;
-			for(int i=0; i < entries.length; i++) {
-				ReflectionArgumentEntry e = entries[i];
-				if(!e.isOptional()){//e.isRequired() || e.isNullable()) {
-					this.minimumArrayLength = i+1;
-				}
-			}
-		}
+    static class ByteArgumentEntry extends ReflectionArgumentEntry {
+        ByteArgumentEntry(ArgumentEntry e) {
+            super(e);
+        }
+        public void convert(Object[] params, JsonNode obj) throws IllegalArgumentException {
+            if (obj.isInt()) { // FIXME: can we do better?
+                params[getIndex()] = obj.intValue();
+            } else {
+                throw new IllegalArgumentException();
+            }
+        }
+    }
 
-		public void invoke(Object target, Request request) throws Exception {
-			Object[] params = new Object[parameterLength];
-			if(async) {
-				params[0] = request;
-			}
+    static class ShortArgumentEntry extends ReflectionArgumentEntry {
+        ShortArgumentEntry(ArgumentEntry e) {
+            super(e);
+        }
+        public void convert(Object[] params, JsonNode obj) throws IllegalArgumentException {
+            if (obj.isShort()) {
+                params[getIndex()] = obj.shortValue();
+            } else {
+                throw new IllegalArgumentException();
+            }
+        }
+    }
 
-			// TODO set default values here
+    static class IntArgumentEntry extends ReflectionArgumentEntry {
+        IntArgumentEntry(ArgumentEntry e) {
+            super(e);
+        }
+        public void convert(Object[] params, JsonNode obj) throws IllegalArgumentException {
+            if (obj.isInt()) {
+                params[getIndex()] = obj.intValue();
+            } else {
+                throw new IllegalArgumentException();
+            }
+        }
+    }
 
-			try {
-				Value args = request.getArguments();
+    static class LongArgumentEntry extends ReflectionArgumentEntry {
+        LongArgumentEntry(ArgumentEntry e) {
+            super(e);
+        }
+        public void convert(Object[] params, JsonNode obj) throws IllegalArgumentException {
+            if (obj.isLong()) {
+                params[getIndex()] = obj.longValue();
+            } else {
+                throw new IllegalArgumentException();
+            }
+        }
+    }
 
-				Value[] array = args.asArrayValue().getElementArray();
-				int length = array.length;
-				if(length < minimumArrayLength) {
-					throw new MessageTypeException(String.format("Method needs at least %s args.But only %s args are passed",minimumArrayLength,length));
-				}
+    static class FloatArgumentEntry extends ReflectionArgumentEntry {
+        FloatArgumentEntry(ArgumentEntry e) {
+            super(e);
+        }
+        public void convert(Object[] params, JsonNode obj) throws IllegalArgumentException {
+            if (obj.isFloat()) {
+                params[getIndex()] = obj.floatValue();
+            } else {
+                throw new IllegalArgumentException();
+            }
+        }
+    }
 
-				int i;
-				for(i=0; i < minimumArrayLength; i++) {
-					ReflectionArgumentEntry e = entries[i];
-					if(!e.isAvailable()) {
-						continue;
-					}
+    static class DoubleArgumentEntry extends ReflectionArgumentEntry {
+        DoubleArgumentEntry(ArgumentEntry e) {
+            super(e);
+        }
+        public void convert(Object[] params, JsonNode obj) throws IllegalArgumentException {
+            if (obj.isDouble()) {
+                params[getIndex()] = obj.doubleValue();
+            } else {
+                throw new IllegalArgumentException();
+            }
+        }
+    }
 
-					Value obj = array[i];
-					if(obj.isNilValue()) {
-						if(e.isRequired()) {
-							// Required + nil => exception
-							throw new MessageTypeException();
-						} else if(e.isOptional()) {
-							// Optional + nil => keep default value
-						} else {  // Nullable
-							// Nullable + nil => set null
-							e.setNull(params);
-						}
-					} else {
-                        try{
-						    e.convert(params,  obj);
-                        }catch(MessageTypeException mte){
-                            logger.error(String.format("Expect Method:%s ArgIndex:%s Type:%s. But passed:%s",request.getMethodName(),i,e.getGenericType(),obj));
-                            throw new MessageTypeException(String.format(
-                                    "%sth argument type is %s.But wrong type is sent.",i+1,e.getJavaTypeName())
-                                    );
+    static class ObjectArgumentEntry extends ReflectionArgumentEntry {
+
+        private ObjectMapper mapper;
+        private JavaType type;
+
+        ObjectArgumentEntry(ArgumentEntry e, ObjectMapper mapper, Type genericType) {
+            super(e);
+            this.mapper = mapper;
+            type = mapper.constructType(genericType);
+        }
+
+        @SuppressWarnings("unchecked")
+        public void convert(Object[] params, JsonNode obj) throws IllegalArgumentException {
+            params[getIndex()] = mapper.convertValue(obj, type);
+        }
+    }
+
+    private static class ReflectionInvoker implements Invoker {
+        protected Method method;
+        protected int parameterLength;
+        protected ReflectionArgumentEntry[] entries;
+        protected int minimumArrayLength;
+        boolean async;
+
+        public ReflectionInvoker(Method method, ReflectionArgumentEntry[] entries, boolean async) {
+            this.method = method;
+            this.parameterLength = method.getParameterTypes().length;
+            this.entries = entries;
+            this.async = async;
+            this.minimumArrayLength = 0;
+            for(int i=0; i < entries.length; i++) {
+                ReflectionArgumentEntry e = entries[i];
+                if(!e.isOptional()){//e.isRequired() || e.isNullable()) {
+                    this.minimumArrayLength = i+1;
+                }
+            }
+        }
+
+        public void invoke(Object target, Request request) throws Exception {
+            Object[] params = new Object[parameterLength];
+            if (async) {
+                params[0] = request;
+            }
+
+            // TODO set default values here
+
+            try {
+                ArrayNode args = request.getArguments();
+                int length = args.size();
+                if (length < minimumArrayLength) {
+                    throw new IllegalArgumentException(String.format("Method needs at least %s args.But only %s args are passed", minimumArrayLength, length));
+                }
+
+                int i;
+                for (i = 0; i < minimumArrayLength; i++) {
+                    ReflectionArgumentEntry e = entries[i];
+                    if (!e.isAvailable()) {
+                        continue;
+                    }
+
+                    JsonNode obj = args.get(i);
+                    if (obj.isNull()) {
+                        if (e.isRequired()) {
+                            // Required + nil => exception
+                            throw new IllegalArgumentException();
+                        } else if (e.isOptional()) {
+                            // Optional + nil => keep default value
+                        } else {  // Nullable
+                            // Nullable + nil => set null
+                            e.setNull(params);
                         }
-					}
-				}
-
-				int max = length < entries.length ? length : entries.length;
-				for(; i < max; i++) {
-					ReflectionArgumentEntry e = entries[i];
-					if(!e.isAvailable()) {
-						continue;
-					}
-
-					Value obj = array[i];
-					if(obj.isNilValue()) {
-						// this is Optional field becaue i >= minimumArrayLength
-						// Optional + nil => keep default value
-					} else {
-
-                        try{
-						    e.convert(params, obj);
-                        }catch(MessageTypeException mte){
-                            logger.error(String.format("Expect Method:%s ArgIndex:%s Type:%s. But passed:%s",request.getMethodName(),i,e.getGenericType(),obj));
-                            throw new MessageTypeException(String.format(
-                                    "%sth argument type is %s.But wrong type is sent.",i+1,e.getJavaTypeName())
+                    } else {
+                        try {
+                            e.convert(params, obj);
+                        } catch (IllegalArgumentException mte){
+                            logger.error(String.format("Expect Method:%s ArgIndex:%s Type:%s. But passed:%s", request.getMethodName(), i, e.getGenericType(), obj));
+                            throw new IllegalArgumentException(String.format(
+                                    "%sth argument type is %s.But wrong type is sent.", i + 1, e.getJavaTypeName())
                             );
                         }
-					}
-				}
+                    }
+                }
 
-				// latter entries are all Optional + nil => keep default value
+                int max = length < entries.length ? length : entries.length;
+                for (; i < max; i++) {
+                    ReflectionArgumentEntry e = entries[i];
+                    if (!e.isAvailable()) {
+                        continue;
+                    }
 
-			} catch (MessageTypeException e) {
-                throw e;
-			} catch (Exception e) {
+                    JsonNode obj = args.get(i);
+                    if (obj.isNull()) {
+                        // this is Optional field becaue i >= minimumArrayLength
+                        // Optional + nil => keep default value
+                    } else {
+                        try {
+                            e.convert(params, obj);
+                        } catch (IllegalArgumentException iae){
+                            logger.error(String.format("Expect Method:%s ArgIndex:%s Type:%s. But passed:%s", request.getMethodName(), i, e.getGenericType(), obj));
+                            throw new IllegalArgumentException(String.format(
+                                    "%sth argument type is %s.But wrong type is sent.", i + 1, e.getJavaTypeName())
+                            );
+                        }
+                    }
+                }
+
+                // latter entries are all Optional + nil => keep default value
+            } catch (Exception e) {
                 //e.printStackTrace();
                 throw e;
-			}
+            }
 
-			Object result = null;
-            try{
+            Object result;
+            try {
                 result = method.invoke(target, params);
-            }catch(InvocationTargetException e ){
-                if(e.getCause() != null && e.getCause() instanceof Exception){
+            } catch (InvocationTargetException e ){
+                if (e.getCause() != null && e.getCause() instanceof Exception){
                     throw (Exception)e.getCause();
-                }else{
+                } else{
                     throw e;
                 }
             }
-			if(!async) {
-				request.sendResult(result);
-			}
 
-			// TODO exception
-		}
-	}
+            if (!async) {
+                request.sendResult(result);
+            }
+            // TODO exception
+        }
+    }
 
-	public Invoker buildInvoker(Method targetMethod, ArgumentEntry[] entries, boolean async) {
-		int mod = targetMethod.getModifiers();
-		if(!Modifier.isPublic(mod)) {
-			targetMethod.setAccessible(true);
-		}
+    public Invoker buildInvoker(Method targetMethod, ArgumentEntry[] entries, boolean async) {
+        int mod = targetMethod.getModifiers();
+        if(!Modifier.isPublic(mod)) {
+            targetMethod.setAccessible(true);
+        }
 
-		ReflectionArgumentEntry[] res = new ReflectionArgumentEntry[entries.length];
-		for(int i=0; i < entries.length; i++) {
-			ArgumentEntry e = entries[i];
-			Class<?> type = e.getType();
-			if(!e.isAvailable()) {
-				res[i] = new NullArgumentEntry(e);
-			} else if(type.equals(boolean.class)) {
-				res[i] = new BooleanArgumentEntry(e);
-			} else if(type.equals(byte.class)) {
-				res[i] = new ByteArgumentEntry(e);
-			} else if(type.equals(short.class)) {
-				res[i] = new ShortArgumentEntry(e);
-			} else if(type.equals(int.class)) {
-				res[i] = new IntArgumentEntry(e);
-			} else if(type.equals(long.class)) {
-				res[i] = new LongArgumentEntry(e);
-			} else if(type.equals(float.class)) {
-				res[i] = new FloatArgumentEntry(e);
-			} else if(type.equals(double.class)) {
-				res[i] = new DoubleArgumentEntry(e);
-			} else {
+        ReflectionArgumentEntry[] res = new ReflectionArgumentEntry[entries.length];
+        for (int i = 0; i < entries.length; i++) {
+            ArgumentEntry e = entries[i];
+            Class<?> type = e.getType();
+            if (!e.isAvailable()) {
+                res[i] = new NullArgumentEntry(e);
+            } else if (type.equals(boolean.class)) {
+                res[i] = new BooleanArgumentEntry(e);
+            } else if (type.equals(byte.class)) {
+                res[i] = new ByteArgumentEntry(e);
+            } else if (type.equals(short.class)) {
+                res[i] = new ShortArgumentEntry(e);
+            } else if (type.equals(int.class)) {
+                res[i] = new IntArgumentEntry(e);
+            } else if (type.equals(long.class)) {
+                res[i] = new LongArgumentEntry(e);
+            } else if (type.equals(float.class)) {
+                res[i] = new FloatArgumentEntry(e);
+            } else if (type.equals(double.class)) {
+                res[i] = new DoubleArgumentEntry(e);
+            } else {
+                res[i] = new ObjectArgumentEntry(e, mapper, e.getGenericType());
+            }
+        }
 
-                Type t = e.getGenericType();
-				Template tmpl = messagePack.lookup(t);
-                if(tmpl == null){
-                    messagePack.register((Class<?>)t);
-                    tmpl = messagePack.lookup(t);
-                }
-				res[i] = new ObjectArgumentEntry(messagePack,e, tmpl);
-			}
-		}
-
-		return new ReflectionInvoker(targetMethod, res, async);
-	}
+        return new ReflectionInvoker(targetMethod, res, async);
+    }
 }
 

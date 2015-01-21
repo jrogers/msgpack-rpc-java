@@ -17,7 +17,7 @@
 //
 package org.msgpack.rpc.reflect;
 
-import org.msgpack.MessagePack;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.Map;
 import java.util.HashMap;
@@ -34,19 +34,19 @@ public class Reflect {
      * instance.getInvoker(method); }
      */
 
-    private Map<Class<?>, Proxy<?>> proxyCache = new HashMap<Class<?>, Proxy<?>>();
+    private Map<Class<?>, Proxy<?>> proxyCache = new HashMap<>();
 
-    private Map<Method, Invoker> invokerCache = new HashMap<Method, Invoker>();
+    private Map<Method, Invoker> invokerCache = new HashMap<>();
 
     private InvokerBuilder invokerBuilder;
     private ProxyBuilder proxyBuilder;
 
-    public Reflect(MessagePack messagePack) {
-        invokerBuilder = new ReflectionInvokerBuilder(messagePack);
-        proxyBuilder = new ReflectionProxyBuilder(messagePack);
+    public Reflect(ObjectMapper mapper) {
+        invokerBuilder = new ReflectionInvokerBuilder(mapper);
+        proxyBuilder = new ReflectionProxyBuilder(mapper);
     }
 
-    public Reflect( InvokerBuilder invokerBuilder,ProxyBuilder proxyBuilder) {
+    public Reflect(InvokerBuilder invokerBuilder,ProxyBuilder proxyBuilder) {
         this.invokerBuilder = invokerBuilder;
         this.proxyBuilder = proxyBuilder;
     }
@@ -55,7 +55,7 @@ public class Reflect {
     public synchronized <T> Proxy<T> getProxy(Class<T> iface) {
         Proxy<?> proxy = proxyCache.get(iface);
         if (proxy == null) {
-            proxy = proxyBuilder.buildProxy(iface);// ProxyBuilder.build(iface);
+            proxy = proxyBuilder.buildProxy(iface);
             proxyCache.put(iface, proxy);
         }
         return (Proxy<T>) proxy;

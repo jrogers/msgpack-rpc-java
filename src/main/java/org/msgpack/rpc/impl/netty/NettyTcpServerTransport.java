@@ -58,10 +58,9 @@ class NettyTcpServerTransport implements ServerTransport {
                     @Override
                     public void initChannel(SocketChannel ch) throws Exception {
                         ch.pipeline().addLast(
-                                new MessagePackDecoder(loop.getMessagePack()),
+                                new MessagePackDecoder(loop.getObjectMapper()),
                                 new MessageHandler(handler),
-                                new MessagePackEncoder(loop.getMessagePack()),
-                                new MessagePackableEncoder(loop.getMessagePack()));
+                                new MessagePackEncoder(loop.getObjectMapper()));
                     }
                 })
                 .option(ChannelOption.SO_BACKLOG, 128)          // (5)

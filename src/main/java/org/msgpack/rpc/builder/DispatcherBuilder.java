@@ -1,7 +1,8 @@
 package org.msgpack.rpc.builder;
 
-import org.msgpack.MessagePack;
 import org.msgpack.rpc.dispatcher.Dispatcher;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * User: takeshita
@@ -9,6 +10,5 @@ import org.msgpack.rpc.dispatcher.Dispatcher;
  */
 public interface DispatcherBuilder {
 
-    public Dispatcher build(Object handler,MessagePack messagePack) ;
-
+    public Dispatcher build(Object handler, ObjectMapper mapper) ;
 }

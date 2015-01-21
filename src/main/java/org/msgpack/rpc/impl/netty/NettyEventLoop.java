@@ -19,7 +19,6 @@ package org.msgpack.rpc.impl.netty;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
-import org.msgpack.MessagePack;
 import org.msgpack.rpc.Session;
 import org.msgpack.rpc.Server;
 import org.msgpack.rpc.loop.EventLoop;
@@ -28,11 +27,13 @@ import org.msgpack.rpc.transport.ClientTransport;
 import org.msgpack.rpc.config.TcpServerConfig;
 import org.msgpack.rpc.config.TcpClientConfig;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 public class NettyEventLoop extends EventLoop {
     public NettyEventLoop(ExecutorService workerExecutor,
             ExecutorService ioExecutor,
-            ScheduledExecutorService scheduledExecutor, MessagePack messagePack) {
-        super(workerExecutor, ioExecutor, scheduledExecutor, messagePack);
+            ScheduledExecutorService scheduledExecutor, ObjectMapper mapper) {
+        super(workerExecutor, ioExecutor, scheduledExecutor, mapper);
     }
 
     protected ClientTransport openTcpTransport(TcpClientConfig config,

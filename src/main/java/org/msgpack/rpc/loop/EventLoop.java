@@ -23,7 +23,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import org.msgpack.MessagePack;
+import org.msgpack.jackson.dataformat.MessagePackFactory;
 import org.msgpack.rpc.Session;
 import org.msgpack.rpc.Server;
 import org.msgpack.rpc.transport.ClientTransport;
@@ -33,6 +33,8 @@ import org.msgpack.rpc.config.ServerConfig;
 import org.msgpack.rpc.config.TcpClientConfig;
 import org.msgpack.rpc.config.TcpServerConfig;
 import org.msgpack.rpc.impl.netty.NettyEventLoopFactory;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public abstract class EventLoop {
     static private EventLoopFactory loopFactory;
@@ -61,49 +63,50 @@ public abstract class EventLoop {
     }
 
     static public EventLoop start() {
-        return start(Executors.newCachedThreadPool());
+        return start(Executors.newCachedThreadPool(), new ObjectMapper(new MessagePackFactory()));
     }
 
-    static public EventLoop start(MessagePack messagePack) {
+    static public EventLoop start(ObjectMapper mapper) {
         return start(Executors.newCachedThreadPool(),
                 Executors.newCachedThreadPool(),
-                Executors.newScheduledThreadPool(2), messagePack);
+                Executors.newScheduledThreadPool(2), mapper);
     }
 
-    static public EventLoop start(ExecutorService workerExecutor) {
-        return start(workerExecutor, Executors.newCachedThreadPool());
+    static public EventLoop start(ExecutorService workerExecutor, ObjectMapper mapper) {
+        return start(workerExecutor, Executors.newCachedThreadPool(), mapper);
     }
 
-    static public EventLoop start(ExecutorService workerExecutor, ExecutorService ioExecutor) {
+    static public EventLoop start(ExecutorService workerExecutor, ExecutorService ioExecutor,
+                                  ObjectMapper mapper) {
         return start(workerExecutor, ioExecutor,
-                Executors.newScheduledThreadPool(2), new MessagePack());
+                Executors.newScheduledThreadPool(2), mapper);
     }
 
     static public EventLoop start(
             ExecutorService workerExecutor, ExecutorService ioExecutor,
-            ScheduledExecutorService scheduledExecutor, MessagePack messagePack) {
-        return getFactory().make(workerExecutor, ioExecutor, scheduledExecutor, messagePack);
+            ScheduledExecutorService scheduledExecutor, ObjectMapper mapper) {
+        return getFactory().make(workerExecutor, ioExecutor, scheduledExecutor, mapper);
     }
 
     private ExecutorService workerExecutor;
     private ExecutorService ioExecutor;
     private ScheduledExecutorService scheduledExecutor;
-    private MessagePack messagePack;
+    private ObjectMapper mapper;
 
-    public MessagePack getMessagePack() {
-        return messagePack;
+    public ObjectMapper getObjectMapper() {
+        return mapper;
     }
 
-    public void setMessagePack(MessagePack messagePack) {
-        this.messagePack = messagePack;
+    public void setObjectMapper(ObjectMapper mapper) {
+        this.mapper = mapper;
     }
 
     public EventLoop(ExecutorService workerExecutor, ExecutorService ioExecutor,
-            ScheduledExecutorService scheduledExecutor, MessagePack messagePack) {
+            ScheduledExecutorService scheduledExecutor, ObjectMapper mapper) {
         this.workerExecutor = workerExecutor;
         this.scheduledExecutor = scheduledExecutor;
         this.ioExecutor = ioExecutor;
-        this.messagePack = messagePack;
+        this.mapper = mapper;
     }
 
     public ExecutorService getWorkerExecutor() {

@@ -1,8 +1,9 @@
 package org.msgpack.rpc.builder;
 
-import org.msgpack.MessagePack;
 import org.msgpack.rpc.dispatcher.Dispatcher;
 import org.msgpack.rpc.dispatcher.StopWatchDispatcher;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * User: takeshita
@@ -36,7 +37,7 @@ public class StopWatchDispatcherBuilder implements DispatcherBuilder {
         return disp;
     }
 
-    public Dispatcher build(Object handler, MessagePack messagePack) {
-        return decorate(baseBuilder.build(handler,messagePack));
+    public Dispatcher build(Object handler, ObjectMapper mapper) {
+        return decorate(baseBuilder.build(handler, mapper));
     }
 }

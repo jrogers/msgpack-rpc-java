@@ -18,104 +18,103 @@
 package org.msgpack.rpc.reflect;
 
 import java.lang.reflect.*;
-import org.msgpack.rpc.Future;
 
 public abstract class ProxyBuilder {
-	public static class MethodEntry {
-		private Method method;
-		private String rpcName;
-		private Type genericReturnType;
-		private boolean async;
-		private InvokerBuilder.ArgumentEntry[] argumentEntries;
+    public static class MethodEntry {
+        private Method method;
+        private String rpcName;
+        private Type genericReturnType;
+        private boolean async;
+        private InvokerBuilder.ArgumentEntry[] argumentEntries;
 
-		public MethodEntry(Method method, String rpcName,
-				Type genericReturnType, boolean async,
-				InvokerBuilder.ArgumentEntry[] argumentEntries) {
-			this.method = method;
-			this.rpcName = rpcName;
-			this.genericReturnType = genericReturnType;
-			this.async = async;
-			this.argumentEntries = argumentEntries;
-		}
+        public MethodEntry(Method method, String rpcName,
+                           Type genericReturnType, boolean async,
+                           InvokerBuilder.ArgumentEntry[] argumentEntries) {
+            this.method = method;
+            this.rpcName = rpcName;
+            this.genericReturnType = genericReturnType;
+            this.async = async;
+            this.argumentEntries = argumentEntries;
+        }
 
-		public Method getMethod() {
-			return method;
-		}
+        public Method getMethod() {
+            return method;
+        }
 
-		public String getRpcName() {
-			return rpcName;
-		}
+        public String getRpcName() {
+            return rpcName;
+        }
 
-		public Type getGenericReturnType() {
-			return genericReturnType;
-		}
+        public Type getGenericReturnType() {
+            return genericReturnType;
+        }
 
-		public boolean isReturnTypeVoid() {
-			return genericReturnType == void.class || genericReturnType == Void.class;
-		}
+        public boolean isReturnTypeVoid() {
+            return genericReturnType == void.class || genericReturnType == Void.class;
+        }
 
-		public boolean isAsync() {
-			return async;
-		}
+        public boolean isAsync() {
+            return async;
+        }
 
-		public InvokerBuilder.ArgumentEntry[] getArgumentEntries() {
-			return argumentEntries;
-		}
-	}
+        public InvokerBuilder.ArgumentEntry[] getArgumentEntries() {
+            return argumentEntries;
+        }
+    }
 
-	// Override this method
-	public abstract <T> Proxy<T> buildProxy(Class<T> iface, MethodEntry[] entries);
+    // Override this method
+    public abstract <T> Proxy<T> buildProxy(Class<T> iface, MethodEntry[] entries);
 
-	public <T> Proxy<T> buildProxy(Class<T> iface) {
-		checkValidation(iface);
-		MethodEntry[] entries = readMethodEntries(iface);
-		return buildProxy(iface, entries);
-	}
+    public <T> Proxy<T> buildProxy(Class<T> iface) {
+        checkValidation(iface);
+        MethodEntry[] entries = readMethodEntries(iface);
+        return buildProxy(iface, entries);
+    }
 
-	static boolean isAsyncMethod(Method targetMethod) {
-		// return type is Future<T>
-		return targetMethod.getReturnType().equals( org.msgpack.rpc.Future.class ) ||
-			   targetMethod.getReturnType().equals( java.util.concurrent.Future.class );
-	}
+    static boolean isAsyncMethod(Method targetMethod) {
+        // return type is Future<T>
+        return targetMethod.getReturnType().equals( org.msgpack.rpc.Future.class ) ||
+                targetMethod.getReturnType().equals( java.util.concurrent.Future.class );
+    }
 
 
-	private static void checkValidation(Class<?> iface) {
-		if(!iface.isInterface()) {
-			throw new IllegalArgumentException("not interface: "+iface);
-		}
-		// TODO
-	}
+    private static void checkValidation(Class<?> iface) {
+        if(!iface.isInterface()) {
+            throw new IllegalArgumentException("not interface: "+iface);
+        }
+        // TODO
+    }
 
-	static MethodEntry[] readMethodEntries(Class<?> iface) {
-		Method[] methods = MethodSelector.selectRpcClientMethod(iface);
+    static MethodEntry[] readMethodEntries(Class<?> iface) {
+        Method[] methods = MethodSelector.selectRpcClientMethod(iface);
 
-		MethodEntry[] result = new MethodEntry[methods.length];
-		for(int i=0; i < methods.length; i++) {
-			Method method = methods[i];
+        MethodEntry[] result = new MethodEntry[methods.length];
+        for(int i=0; i < methods.length; i++) {
+            Method method = methods[i];
 
-			InvokerBuilder.ArgumentEntry[] argumentEntries =
-				InvokerBuilder.readArgumentEntries(method, false);
+            InvokerBuilder.ArgumentEntry[] argumentEntries =
+                    InvokerBuilder.readArgumentEntries(method, false);
 
-			boolean async = isAsyncMethod(method);
+            boolean async = isAsyncMethod(method);
 
-			String rpcName = method.getName();
-			if(async) {
-				// removes /Async$/
-				if(rpcName.endsWith("Async")) {
-					rpcName = rpcName.substring(0, rpcName.length()-5);
-				}
-			}
+            String rpcName = method.getName();
+            if(async) {
+                // removes /Async$/
+                if(rpcName.endsWith("Async")) {
+                    rpcName = rpcName.substring(0, rpcName.length()-5);
+                }
+            }
 
-			Type returnType = method.getGenericReturnType();
-			if(async) {
-				// actual return type is Future<HERE>
-				returnType = ((ParameterizedType)returnType).getActualTypeArguments()[0];
-			}
+            Type returnType = method.getGenericReturnType();
+            if(async) {
+                // actual return type is Future<HERE>
+                returnType = ((ParameterizedType)returnType).getActualTypeArguments()[0];
+            }
 
-			result[i] = new MethodEntry(method, rpcName,
-					returnType, async, argumentEntries);
-		}
+            result[i] = new MethodEntry(method, rpcName,
+                    returnType, async, argumentEntries);
+        }
 
-		return result;
-	}
+        return result;
+    }
 }

@@ -19,17 +19,12 @@ package org.msgpack.rpc;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 
 import org.msgpack.rpc.address.Address;
 import org.msgpack.rpc.builder.DefaultDispatcherBuilder;
 import org.msgpack.rpc.builder.DispatcherBuilder;
-import org.msgpack.rpc.reflect.Reflect;
-import org.msgpack.type.NilValue;
-import org.msgpack.type.Value;
 import org.msgpack.rpc.address.IPAddress;
 import org.msgpack.rpc.dispatcher.Dispatcher;
-import org.msgpack.rpc.dispatcher.MethodDispatcher;
 import org.msgpack.rpc.config.ClientConfig;
 import org.msgpack.rpc.config.ServerConfig;
 import org.msgpack.rpc.config.TcpServerConfig;
@@ -39,6 +34,8 @@ import org.msgpack.rpc.loop.EventLoop;
 import org.msgpack.rpc.error.RPCError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.databind.node.ArrayNode;
 
 public class Server extends SessionPool {
 
@@ -85,10 +82,10 @@ public class Server extends SessionPool {
     }
 
     public void serve(Object handler) {
-        this.dp = dispatcherBuilder.build(handler,this.getEventLoop().getMessagePack());
+        this.dp = dispatcherBuilder.build(handler, this.getEventLoop().getObjectMapper());
     }
 
-    public void listen(String host, int port) throws UnknownHostException, IOException {
+    public void listen(String host, int port) throws IOException {
         listen(new TcpServerConfig(new IPAddress(host, port)));
     }
 
@@ -111,8 +108,8 @@ public class Server extends SessionPool {
         super.close();
     }
 
-    public void onRequest(MessageSendable channel, int msgid, String method, Value args) {
-        Request request = new Request(channel, msgid, method, args);
+    public void onRequest(MessageSendable channel, int msgId, String method, ArrayNode args) {
+        Request request = new Request(channel, msgId, method, args);
         try {
             dp.dispatch(request);
         }
@@ -122,16 +119,15 @@ public class Server extends SessionPool {
         } catch (Exception e) {
             logger.error("Unexpected error occured while calling " + method, e);
             // FIXME request.sendError("RemoteError", e.getMessage());
-            if(e.getMessage() == null)
-            {
+            if (e.getMessage() == null) {
                 request.sendError("");
-            }else{
+            } else {
                 request.sendError(e.getMessage());
             }
         }
     }
 
-    public void onNotify(String method, Value args) {
+    public void onNotify(String method, ArrayNode args) {
         Request request = new Request(method, args);
         try {
             dp.dispatch(request);

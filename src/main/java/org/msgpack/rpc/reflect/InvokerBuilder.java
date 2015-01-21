@@ -21,11 +21,12 @@ import java.util.List;
 import java.util.ArrayList;
 import java.lang.reflect.*;
 import java.lang.annotation.*;
-import org.msgpack.annotation.*;
-import org.msgpack.*;
-import org.msgpack.template.*;
+
 import org.msgpack.rpc.Callback;
-import org.msgpack.rpc.Request;
+import org.msgpack.rpc.annotation.Ignore;
+import org.msgpack.rpc.annotation.Index;
+import org.msgpack.rpc.annotation.NotNullable;
+import org.msgpack.rpc.annotation.Optional;
 
 public abstract class InvokerBuilder {
     public static class ArgumentEntry {
@@ -115,30 +116,17 @@ public abstract class InvokerBuilder {
 
     // Override this method
     public abstract Invoker buildInvoker(Method targetMethod,
-            ArgumentEntry[] entries, boolean async);
-
-    public Invoker buildInvoker(Method targetMethod, FieldOption implicitOption) {
-        checkValidation(targetMethod);
-        boolean async = isAsyncMethod(targetMethod);
-        return buildInvoker(targetMethod,
-                readArgumentEntries(targetMethod, implicitOption, async), async);
-    }
+                                         ArgumentEntry[] entries, boolean async);
 
     public Invoker buildInvoker(Method targetMethod) {
         checkValidation(targetMethod);
-        FieldOption implicitOption = readImplicitFieldOption(targetMethod);
         boolean async = isAsyncMethod(targetMethod);
         return buildInvoker(targetMethod,
-                readArgumentEntries(targetMethod, implicitOption, async), async);
+                readArgumentEntries(targetMethod, async), async);
     }
 
     // TODO ArgumentList を作る ArgumentOptionSet が必要
     // TODO FieldList を作る FieldOptionSet
-
-    private static InvokerBuilder selectDefaultInvokerBuilder(
-            MessagePack messagePack) {
-        return new ReflectionInvokerBuilder(messagePack);
-    }
 
     static boolean isAsyncMethod(Method targetMethod) {
         final Class<?>[] types = targetMethod.getParameterTypes();
@@ -149,14 +137,7 @@ public abstract class InvokerBuilder {
         // TODO
     }
 
-    static ArgumentEntry[] readArgumentEntries(Method targetMethod,
-            boolean async) {
-        FieldOption implicitOption = readImplicitFieldOption(targetMethod);
-        return readArgumentEntries(targetMethod, implicitOption, async);
-    }
-
-    static ArgumentEntry[] readArgumentEntries(Method targetMethod,
-            FieldOption implicitOption, boolean async) {
+    static ArgumentEntry[] readArgumentEntries(Method targetMethod, boolean async) {
         Type[] types = targetMethod.getGenericParameterTypes();
         Annotation[][] annotations = targetMethod.getParameterAnnotations();
 
@@ -177,27 +158,27 @@ public abstract class InvokerBuilder {
          * @Index(2) int field_e; // 2
          * int field_f; // 5
          */
-        List<ArgumentEntry> indexed = new ArrayList<ArgumentEntry>();
+        List<ArgumentEntry> indexed = new ArrayList<>();
         int maxIndex = -1;
-        for (int i = 0 + paramsOffset; i < types.length; i++) {
+        for (int i = paramsOffset; i < types.length; i++) {
             Type t = types[i];
             Annotation[] as = annotations[i];
 
-            FieldOption opt = readFieldOption(t, as, implicitOption);
+            FieldOption opt = readFieldOption(t, as);
             if (opt == FieldOption.IGNORE) {
                 // skip
                 continue;
             }
 
-            int index = readFieldIndex(t, as, maxIndex);
+            int index = readFieldIndex(as, maxIndex);
 
             if (indexed.size() > index && indexed.get(index) != null) {
                 // FIXME exception
-                throw new MessageTypeException("duplicated index: " + index);
+                throw new IllegalArgumentException("duplicated index: " + index);
             }
             if (index < 0) {
                 // FIXME exception
-                throw new MessageTypeException("invalid index: " + index);
+                throw new IllegalArgumentException("invalid index: " + index);
             }
 
             while (indexed.size() <= index) {
@@ -223,21 +204,7 @@ public abstract class InvokerBuilder {
         return result;
     }
 
-    private static FieldOption readImplicitFieldOption(Method targetMethod) {
-        // FIXME
-        MessagePackMessage a = targetMethod.getAnnotation(MessagePackMessage.class);
-        if (a == null) {
-            Message b = targetMethod.getAnnotation(Message.class);
-            if (b != null) {
-                return b.value();
-            } else {
-                return FieldOption.DEFAULT;
-            }
-        }
-        return a.value();
-    }
-
-    private static FieldOption readFieldOption(Type type, Annotation[] as, FieldOption implicitOption) {
+    private static FieldOption readFieldOption(Type type, Annotation[] as) {
         if (isAnnotated(as, Ignore.class)) {
             return FieldOption.IGNORE;
         } else if (isAnnotated(as, NotNullable.class)) {
@@ -248,12 +215,12 @@ public abstract class InvokerBuilder {
             if (type instanceof Class<?> && ((Class<?>) type).isPrimitive()) {
                 return FieldOption.NOTNULLABLE;
             } else {
-                return implicitOption;
+                return FieldOption.DEFAULT;
             }
         }
     }
 
-    private static int readFieldIndex(Type type, Annotation[] as, int maxIndex) {
+    private static int readFieldIndex(Annotation[] as, int maxIndex) {
         Index a = getAnnotation(as, Index.class);
         if (a == null) {
             return maxIndex + 1;
@@ -263,13 +230,13 @@ public abstract class InvokerBuilder {
     }
 
     private static boolean isAnnotated(Annotation[] array,
-            Class<? extends Annotation> with) {
+                                       Class<? extends Annotation> with) {
         return getAnnotation(array, with) != null;
     }
 
     @SuppressWarnings("unchecked")
     private static <T extends Annotation> T getAnnotation(Annotation[] array,
-            Class<T> key) {
+                                                          Class<T> key) {
         for (Annotation a : array) {
             if (key.isInstance(a)) {
                 return (T) a;

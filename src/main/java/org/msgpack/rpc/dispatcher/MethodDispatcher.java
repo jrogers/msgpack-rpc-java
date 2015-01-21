@@ -44,7 +44,7 @@ public class MethodDispatcher implements Dispatcher {
     public MethodDispatcher(Reflect reflect, Object target, Method[] methods) {
         // FIXME check target instanceof method.getClass()
         this.target = target;
-        this.methodMap = new HashMap<String, Invoker>();
+        this.methodMap = new HashMap<>();
         this.reflect = reflect;
         for (Method method : methods) {
             // FIXME check duplication of the names

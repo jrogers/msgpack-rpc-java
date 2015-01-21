@@ -17,53 +17,24 @@
 //
 package org.msgpack.rpc.message;
 
-import java.io.IOException;
-import org.msgpack.MessagePackable;
-import org.msgpack.packer.Packer;
-import org.msgpack.type.Value;
-import org.msgpack.MessageTypeException;
-import org.msgpack.unpacker.Unpacker;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 
-public class NotifyMessage implements MessagePackable {
+public class NotifyMessage implements Message {
+
     private String method;
-    private Object[] args;
+    private ArrayNode args;
 
-    public NotifyMessage(String method, Object[] args) {
+    public NotifyMessage(String method, ArrayNode args) {
         this.method = method;
         this.args = args;
     }
 
-    // public String getMethodName() {
-    // return method;
-    // }
-
-    // public Object getArguments() {
-    // return args;
-    // }
-
-    public void writeTo(Packer pk) throws IOException {
-        pk.writeArrayBegin(3);
-        pk.write(Messages.NOTIFY);
-        pk.write(method);
-        pk.writeArrayBegin(args.length);
-        for (Object arg : args) {
-            pk.write(arg);
-        }
-        pk.writeArrayEnd();
-        pk.writeArrayEnd();
+    public ArrayNode toObjectArray(ObjectMapper mapper) {
+        ArrayNode messageNode = mapper.createArrayNode();
+        messageNode.add(Messages.NOTIFY);
+        messageNode.add(method);
+        messageNode.add(args);
+        return messageNode;
     }
-
-    public void readFrom(Unpacker u) throws IOException {
-        throw new UnsupportedOperationException();
-    }
-
-    public void messagePack(Packer pk) throws IOException {
-        writeTo(pk);
-        /*
-         * pk.packArray(3); pk.packInt(Messages.NOTIFY); pk.packString(method);
-         * pk.packArray(args.length); for(Object arg : args) { pk.pack(arg); }
-         */
-    }
-
-    // FIXME messageConvert
 }

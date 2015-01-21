@@ -1,57 +1,52 @@
 package org.msgpack.rpc;
 
-import junit.framework.TestCase;
 import org.junit.Test;
-import org.msgpack.MessageTypeException;
-import org.msgpack.rpc.builder.StopWatchDispatcherBuilder;
-import org.msgpack.rpc.error.NoMethodError;
-import org.msgpack.rpc.error.RemoteError;
-import org.msgpack.rpc.error.TimeoutError;
-import org.msgpack.rpc.loop.EventLoop;
-import org.msgpack.type.Value;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
-import java.util.Date;
+import org.msgpack.rpc.error.RemoteError;
+import org.msgpack.rpc.loop.EventLoop;
 
 /**
  * Test when server throws exceptions.
  * User: takeshita
  * Create: 12/06/15 12:12
  */
-public class ServerErrorTest  extends TestCase {
-
+public class ServerErrorTest {
 
     public static class TestServer{
 
+        @SuppressWarnings("unused")
         public String echo(String message){
             return message;
         }
 
-
+        @SuppressWarnings("unused")
         public String waitWhile(int waitMSecs) throws Exception{
             Thread.sleep(waitMSecs);
             return "ok";
         }
 
+        @SuppressWarnings("unused")
         public String throwException(String errorMessage) throws Exception{
-            throw new MessageTypeException(errorMessage);
+            throw new Exception(errorMessage);
         }
 
+        @SuppressWarnings("unused")
         public String throwRuntimeException(String errorMessage) {
             throw new RuntimeException(errorMessage);
         }
-
     }
 
-    static interface CallFunc{
-        public void apply(Client client);
+    interface CallFunc {
+        void apply(Client client);
     }
 
-    void call( CallFunc func)  throws Exception{
+    void call(CallFunc func)  throws Exception{
         EventLoop loop = EventLoop.start();
         Server svr = new Server(loop);
         Client c = new Client("127.0.0.1", 19850, loop);
         c.setRequestTimeout(1);
-
         try {
             svr.serve(new TestServer());
             svr.listen(19850);
@@ -65,123 +60,107 @@ public class ServerErrorTest  extends TestCase {
         }
     }
 
-
     @Test
-    public void testNormalException()  throws Exception {
-        call( new CallFunc(){
+    public void normalException()  throws Exception {
+        call(new CallFunc(){
             public void apply(Client client) {
                 String message = "Normal exception";
-                try{
-                    client.callApply("throwException",new Object[]{message});
+                try {
+                    client.callApply("throwException", message);
                     fail("Must throw exception");
-                }catch(RemoteError e){
-                    assertEquals(message,e.getMessage());
-                }catch(Exception e){
+                } catch (RemoteError e) {
+                    assertEquals(message, e.getMessage());
+                } catch (Exception e) {
                     System.out.println(e.getClass());
                     fail("Not normal exception");
                 }
-
             }
-        }
-        );
-
+        });
     }
 
     @Test
-    public void testRuntimeException()  throws Exception {
-        call( new CallFunc(){
+    public void runtimeException()  throws Exception {
+        call(new CallFunc(){
             public void apply(Client client) {
                 String message = "Normal exception";
-                try{
-                    client.callApply("throwRuntimeException",new Object[]{message});
+                try {
+                    client.callApply("throwRuntimeException", message);
                     fail("Must throw exception");
-                }catch(RemoteError e){
-                    assertEquals(message,e.getMessage());
-                }catch(Exception e){
+                } catch (RemoteError e) {
+                    assertEquals(message, e.getMessage());
+                } catch (Exception e) {
                     System.out.println(e.getClass());
                     fail("Not normal exception");
                 }
-
             }
-        }
-        );
-
+        });
     }
+
     @Test
-    public void testNullErrorMessage()  throws Exception {
-        call( new CallFunc(){
+    public void errorMessage()  throws Exception {
+        call(new CallFunc(){
             public void apply(Client client) {
-                try{
-                    client.callApply("throwRuntimeException",new Object[]{null});
+                try {
+                    client.callApply("throwRuntimeException", new Object[] { null });
                     fail("Must throw exception");
-                }catch(RemoteError e){
-                    assertEquals("",e.getMessage());
-                }catch(Exception e){
+                } catch (RemoteError e) {
+                    assertEquals("", e.getMessage());
+                } catch (Exception e) {
                     System.out.println(e.getClass());
                     fail("Not normal exception");
                 }
-
             }
-        }
-        );
-
+        });
     }
 
     @Test
-    public void testNoMethodError()  throws Exception {
-        call( new CallFunc(){
+    public void noMethodError()  throws Exception {
+        call(new CallFunc(){
             public void apply(Client client) {
-                try{
-                    client.callApply("methodWhichDoesNotExist",new Object[]{null});
+                try {
+                    client.callApply("methodWhichDoesNotExist", new Object[] { null });
                     fail("Must throw exception");
-                }catch(RemoteError e){
-                    assertEquals(".CallError.NoMethodError",e.getMessage());
-                }catch(Exception e){
+                } catch (RemoteError e) {
+                    assertEquals(".CallError.NoMethodError", e.getMessage());
+                } catch (Exception e) {
                     System.out.println("Wrong exception:" + e.getClass());
                     fail("Not NoMethodException");
                 }
-
             }
-        }
-        );
-
+        });
     }
+
     @Test
-    public void testBadArgs()  throws Exception {
-        call( new CallFunc(){
+    public void badArgs()  throws Exception {
+        call(new CallFunc(){
             public void apply(Client client) {
-                try{
-                    client.callApply("echo",new Object[]{1});
+                try {
+                    client.callApply("echo"/*, 1*/);
                     fail("Must throw exception");
-                }catch(RemoteError e){
+                } catch (RemoteError e) {
                     // OK
-                }catch(Exception e){
+                } catch (Exception e) {
                     System.out.println("Wrong exception:" + e.getClass());
                     fail("Not NoMethodException");
                 }
-
             }
-        }
-        );
-
+        });
     }
+
     @Test
-    public void testTimeout()  throws Exception {
-        call( new CallFunc(){
+    public void timeout()  throws Exception {
+        call(new CallFunc(){
             public void apply(Client client) {
-                try{
-                    client.callApply("waitWhile",new Object[]{3000});
+                try {
+                    client.callApply("waitWhile", 3000);
                     fail("Must throw exception");
-                }catch(RemoteError e){
-                    assertEquals("timedout",e.getMessage());
-                }catch(Exception e){
+                } catch (RemoteError e) {
+                    assertEquals("timedout", e.getMessage());
+                } catch (Exception e) {
                     System.out.println("Wrong exception:" + e.getClass());
                     fail("Not NoMethodException");
                 }
-
             }
-        }
-        );
-
+        });
     }
 }

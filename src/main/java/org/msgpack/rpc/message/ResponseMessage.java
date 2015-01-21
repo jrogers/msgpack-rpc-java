@@ -17,57 +17,26 @@
 //
 package org.msgpack.rpc.message;
 
-import java.io.IOException;
-import org.msgpack.*;
-import org.msgpack.packer.Packer;
-import org.msgpack.template.Template;
-import org.msgpack.type.Value;
-import org.msgpack.type.ValueFactory;
-import org.msgpack.unpacker.Unpacker;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 
-public class ResponseMessage implements MessagePackable {
-    private int msgid;
+public class ResponseMessage implements Message {
+    private int msgId;
     private Object error;
     private Object result;
 
-    public ResponseMessage(int msgid, Object error, Object result) {
-        this.msgid = msgid;
+    public ResponseMessage(int msgId, Object error, Object result) {
+        this.msgId = msgId;
         this.error = error;
         this.result = result;
     }
 
-    // public int getMessageID() {
-    // return msgid;
-    // }
-
-    // public Object getError() {
-    // return error;
-    // }
-
-    // public Object getResult() {
-    // return result;
-    // }
-
-    public void writeTo(Packer pk) throws IOException {
-        pk.writeArrayBegin(4);
-        pk.write(Messages.RESPONSE);
-        pk.write(msgid);
-        pk.write(error);
-        pk.write(result);
-        pk.writeArrayEnd();
+    public ArrayNode toObjectArray(ObjectMapper mapper) {
+        ArrayNode messageNode = mapper.createArrayNode();
+        messageNode.add(Messages.RESPONSE);
+        messageNode.add(msgId);
+        messageNode.addPOJO(error);
+        messageNode.addPOJO(result);
+        return messageNode;
     }
-
-    public void readFrom(Unpacker u) throws IOException {
-        throw new UnsupportedOperationException();
-    }
-
-    public void messagePack(Packer pk) throws IOException {
-        writeTo(pk);
-        /*
-         * pk.packArray(4); pk.packInt(Messages.RESPONSE); pk.packInt(msgid);
-         * pk.pack(error); pk.pack(result);
-         */
-    }
-
-    // FIXME messageConvert
 }

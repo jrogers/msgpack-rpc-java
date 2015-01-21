@@ -17,7 +17,7 @@ Currently, these features are supported:
 
 MessagePack-RPC for Java requires the following packages:
 
-  - MessagePack for Java - https://github.com/msgpack/msgpack-java
+  - jackson-dataformat-msgpack - https://github.com/msgpack/msgpack-java
   - Netty - http://netty.io/
   - A SLF4J-compatible logging framework (log4j used by default) - http://slf4j.org/
 

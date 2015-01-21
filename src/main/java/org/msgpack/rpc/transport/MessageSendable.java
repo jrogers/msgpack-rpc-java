@@ -17,8 +17,9 @@
 //
 package org.msgpack.rpc.transport;
 
+import org.msgpack.rpc.message.Message;
+
 public interface MessageSendable {
 
-    public void sendMessage(Object obj);
-
+    void sendMessage(Message message);
 }

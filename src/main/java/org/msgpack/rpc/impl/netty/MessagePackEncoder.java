@@ -4,20 +4,21 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufOutputStream;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
-import org.msgpack.MessagePack;
-import org.msgpack.type.Value;
 
-class MessagePackEncoder extends MessageToByteEncoder<Value> {
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-    private final MessagePack _msgpack;
+import org.msgpack.rpc.message.Message;
 
-    public MessagePackEncoder(final MessagePack msgpack){
-        _msgpack = msgpack;
+class MessagePackEncoder extends MessageToByteEncoder<Message> {
+
+    private final ObjectMapper mapper;
+
+    public MessagePackEncoder(final ObjectMapper mapper) {
+        this.mapper = mapper;
     }
 
     @Override
-    protected void encode(ChannelHandlerContext ctx, Value msg, ByteBuf out) throws Exception {
-
-        _msgpack.createPacker(new ByteBufOutputStream(out)).write(msg);
+    protected void encode(ChannelHandlerContext ctx, Message message, ByteBuf out) throws Exception {
+        mapper.writeValue(new ByteBufOutputStream(out), message.toObjectArray(mapper));
     }
 }

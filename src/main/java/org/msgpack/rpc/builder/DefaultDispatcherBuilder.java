@@ -1,9 +1,10 @@
 package org.msgpack.rpc.builder;
 
-import org.msgpack.MessagePack;
 import org.msgpack.rpc.dispatcher.Dispatcher;
 import org.msgpack.rpc.dispatcher.MethodDispatcher;
 import org.msgpack.rpc.reflect.Reflect;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * User: takeshita
@@ -11,9 +12,9 @@ import org.msgpack.rpc.reflect.Reflect;
  */
 public class DefaultDispatcherBuilder implements DispatcherBuilder {
 
-    public Dispatcher build(Object handler, MessagePack messagePack) {
+    public Dispatcher build(Object handler, ObjectMapper mapper) {
         return new MethodDispatcher(
-                new Reflect(messagePack), handler);
+                new Reflect(mapper), handler);
     }
 }
 

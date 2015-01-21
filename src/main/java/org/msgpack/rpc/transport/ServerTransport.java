@@ -22,8 +22,7 @@ import org.msgpack.rpc.address.Address;
 
 public interface ServerTransport extends Closeable {
 
-    public Address getLocalAddress();
+    Address getLocalAddress();
 
-    public void close();
-
+    void close();
 }

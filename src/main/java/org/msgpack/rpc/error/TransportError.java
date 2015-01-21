@@ -18,7 +18,6 @@
 package org.msgpack.rpc.error;
 
 public class TransportError extends RPCError {
-    private static final long serialVersionUID = 1L;
 
     public TransportError(String message) {
         super(message);
