@@ -17,7 +17,7 @@
 //
 package org.msgpack.rpc.error;
 
-import org.msgpack.type.Value;
+import com.fasterxml.jackson.databind.JsonNode;
 
 public class ErrorMap {
     // FIXME TreeMap<String, Class<RPCError>> map;
@@ -31,7 +31,7 @@ public class ErrorMap {
         // FIXME
     }
 
-    public void raise(String code, Value data) throws RPCError {
+    public void raise(String code, JsonNode data) throws RPCError {
         // FIXME
     }
 
