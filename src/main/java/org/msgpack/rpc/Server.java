@@ -117,7 +117,7 @@ public class Server extends SessionPool {
             // FIXME
             request.sendError(e.getCode(), e);
         } catch (Exception e) {
-            logger.error("Unexpected error occured while calling " + method, e);
+            logger.error("Unexpected error occurred while calling " + method, e);
             // FIXME request.sendError("RemoteError", e.getMessage());
             if (e.getMessage() == null) {
                 request.sendError("");
@@ -132,7 +132,7 @@ public class Server extends SessionPool {
         try {
             dp.dispatch(request);
         } catch (Exception e) {
-            // FIXME ignore?
+            logger.warn("Unexpected error occurred while dispatching " + method, e);
         }
     }
 }
