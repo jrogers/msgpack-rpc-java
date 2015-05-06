@@ -35,9 +35,11 @@ public class RemoteError extends RPCError {
     private static String loadMessage(JsonNode data) {
         if (data.isTextual()) {
             return data.asText();
-        } else {
+        } else if (data.size() > 0) {
             return data.get(0).asText();
         }
+
+        return null;
     }
 
     public static final String CODE = "RemoteError";

@@ -27,8 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class NettyEventLoopFactory implements EventLoopFactory {
 
-    public NettyEventLoopFactory() {
-    }
+    public NettyEventLoopFactory() {}
 
     public EventLoop make(ExecutorService workerExecutor,
             ExecutorService ioExecutor,

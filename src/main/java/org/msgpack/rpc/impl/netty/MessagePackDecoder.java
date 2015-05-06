@@ -11,7 +11,13 @@ import java.util.List;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 class MessagePackDecoder extends ByteToMessageDecoder {
+
+    private static final boolean DEBUG = false;
+    private final static Logger LOGGER = LoggerFactory.getLogger(MessagePackDecoder.class);
 
     private final ObjectMapper mapper;
 
@@ -30,6 +36,12 @@ class MessagePackDecoder extends ByteToMessageDecoder {
         byteBuf.markReaderIndex();
         try {
             JsonNode node = mapper.readTree(new ByteBufInputStream(byteBuf));
+            if (DEBUG) {
+                // Create a JSON mapper.
+                ObjectMapper jsonMapper = new ObjectMapper();
+                LOGGER.debug(jsonMapper.writeValueAsString(node));
+            }
+
             if (node.isArray()) {
                 out.add(node);
             }

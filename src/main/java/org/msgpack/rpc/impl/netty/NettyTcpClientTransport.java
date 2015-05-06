@@ -42,7 +42,6 @@ class NettyTcpClientTransport implements ClientTransport {
     NettyTcpClientTransport(final TcpClientConfig config,
                             final Session session,
                             final NettyEventLoop loop) {
-
         // TODO check session.getAddress() instanceof IPAddress
         final RpcMessageHandler handler = new RpcMessageHandler(session);
 
@@ -63,26 +62,20 @@ class NettyTcpClientTransport implements ClientTransport {
             });
 
         _session = session;
-        _writables = new ConcurrentLinkedQueue<Channel>();
+        _writables = new ConcurrentLinkedQueue<>();
     }
 
     protected ChannelFuture startConnection() {
-
         return _bootstrap.connect(_session.getAddress().getSocketAddress());
     }
 
     public void sendMessage(final Message msg) {
-
-        if(_writables.isEmpty() && _availables.getAndDecrement() > 0){
-
+        if (_writables.isEmpty() && _availables.getAndDecrement() > 0) {
             startConnection().addListener(new ChannelFutureListener() {
 
                 public void operationComplete(ChannelFuture future) throws Exception {
-
                     final Channel connected = future.channel();
-
                     sendMessageChannel(connected, msg);
-
                     connected.closeFuture().addListener(new ChannelFutureListener() {
                         public void operationComplete(ChannelFuture channelFuture) throws Exception {
                             _availables.incrementAndGet();
@@ -90,17 +83,11 @@ class NettyTcpClientTransport implements ClientTransport {
                     });
                 }
             });
-        }
-        else{
-
+        } else {
             final Channel writable = _writables.poll();
-
-            if(writable != null){
-
+            if (writable != null) {
                 sendMessageChannel(writable, msg);
-            }
-            else{
-
+            } else {
                 Thread.yield();
                 sendMessage(msg);
             }
@@ -108,23 +95,15 @@ class NettyTcpClientTransport implements ClientTransport {
     }
 
     public void close(){
-
-        while(!_writables.isEmpty()){
+        while(!_writables.isEmpty()) {
                _writables.poll().close();
         }
-
     }
 
     protected ChannelFuture sendMessageChannel(Channel c, Object msg) {
-
-        //System.out.println("[client transport] send message");
-
         return c.writeAndFlush(msg).addListener(new ChannelFutureListener() {
 
             public void operationComplete(ChannelFuture future) throws Exception {
-
-                //System.out.println("[client transport] message sent!!!");
-
                 _writables.offer(future.channel());
             }
         });

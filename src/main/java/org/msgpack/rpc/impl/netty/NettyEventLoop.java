@@ -43,11 +43,9 @@ public class NettyEventLoop extends EventLoop {
 
     protected ServerTransport listenTcpTransport(TcpServerConfig config,
             Server server) {
-
-        try{
+        try {
             return new NettyTcpServerTransport(config, server, this);
-        }
-        catch(Exception ex){
+        } catch (Exception ex) {
             ex.printStackTrace();
             return null;
         }

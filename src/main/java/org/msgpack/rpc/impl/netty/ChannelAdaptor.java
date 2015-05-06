@@ -27,17 +27,14 @@ class ChannelAdaptor implements ClientTransport {
     private final Channel _channel;
 
     protected ChannelAdaptor(final Channel channel) {
-
         _channel = channel;
     }
 
     public void sendMessage(Message msg) {
-
         _channel.writeAndFlush(msg);
     }
 
     public void close() {
-
         _channel.close();
     }
 }
