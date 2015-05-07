@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 class MessagePackEncoder extends MessageToByteEncoder<Message> {
 
     private static final boolean DEBUG = false;
-    private final static Logger LOGGER = LoggerFactory.getLogger(MessagePackDecoder.class);
+    private final static Logger LOGGER = LoggerFactory.getLogger(MessagePackEncoder.class);
 
     private final ObjectMapper mapper;
 
@@ -29,7 +29,7 @@ class MessagePackEncoder extends MessageToByteEncoder<Message> {
         if (DEBUG) {
             // Create a JSON mapper.
             ObjectMapper jsonMapper = new ObjectMapper();
-            LOGGER.debug(jsonMapper.writeValueAsString(node));
+            LOGGER.info(jsonMapper.writeValueAsString(node));
         }
 
         mapper.writeValue(new ByteBufOutputStream(out), node);

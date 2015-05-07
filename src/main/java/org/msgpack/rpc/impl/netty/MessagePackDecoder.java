@@ -39,7 +39,7 @@ class MessagePackDecoder extends ByteToMessageDecoder {
             if (DEBUG) {
                 // Create a JSON mapper.
                 ObjectMapper jsonMapper = new ObjectMapper();
-                LOGGER.debug(jsonMapper.writeValueAsString(node));
+                LOGGER.info(jsonMapper.writeValueAsString(node));
             }
 
             if (node.isArray()) {
